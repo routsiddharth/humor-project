@@ -1,21 +1,26 @@
-import { createClient } from "@/lib/supabase/server";
 import { JokeCard } from "@/components/joke-card";
-import type { Joke } from "@/lib/types";
+import { createClient } from "@/lib/supabase/server";
+import type { JokeWithAuthor } from "@/lib/types";
 
 // Reads cookies (for the auth session), so this renders per-request rather
 // than being frozen at build time.
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function Home({ searchParams }: PageProps<"/">) {
+  const params = await searchParams;
+  const justSubmitted = params.submitted === "1";
+
   const supabase = await createClient();
 
   // Runs with the publishable key under RLS — the same access a browser has.
+  // The embedded author resolves through the jokes.author_id → profiles.id
+  // foreign key, so it costs one round trip rather than one per joke.
   const { data: jokes, error } = await supabase
     .from("jokes")
-    .select("*")
+    .select("*, author:profiles(first_name, last_name, avatar_path)")
     .order("rating", { ascending: false })
     .order("id", { ascending: true })
-    .returns<Joke[]>();
+    .returns<JokeWithAuthor[]>();
 
   return (
     <main className="page">
@@ -27,6 +32,12 @@ export default async function Home() {
             : `${jokes?.length ?? 0} jokes, served from Supabase. Punchlines hidden — tap to reveal.`}
         </p>
       </header>
+
+      {justSubmitted ? (
+        <div className="notice notice--ok" role="status">
+          <strong>Posted.</strong> Your joke is in the list below.
+        </div>
+      ) : null}
 
       {error ? (
         <div className="notice notice--error">

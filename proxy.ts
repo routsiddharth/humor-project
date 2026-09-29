@@ -7,6 +7,12 @@ import { NextResponse, type NextRequest } from "next/server";
 //
 // Auth tokens expire. Server Components cannot write cookies, so without this
 // refresh a user gets logged out mid-session.
+
+// Signed-in-only routes. This is the optimistic check the Next.js docs
+// recommend for Proxy — fast and cookie-based. The pages themselves still call
+// requireUser()/requireCompleteProfile(), which is the authoritative gate.
+const PROTECTED_PREFIXES = ["/profile", "/submit", "/onboarding"];
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -33,9 +39,43 @@ export async function proxy(request: NextRequest) {
 
   // Must be getUser(), not getSession(): only getUser() revalidates the token
   // with Supabase. getSession() trusts the cookie, which is spoofable.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  const needsAuth = PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+
+  if (!user && needsAuth) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("next", pathname);
+    return redirectKeepingCookies(url, response);
+  }
+
+  // Nothing to log in to when already signed in.
+  if (user && pathname === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    url.search = "";
+    return redirectKeepingCookies(url, response);
+  }
 
   return response;
+}
+
+// A bare NextResponse.redirect() would throw away the refreshed session cookies
+// that createServerClient just wrote onto `response`, logging the user out on
+// exactly the request that bounced them.
+function redirectKeepingCookies(url: URL, carrying: NextResponse) {
+  const redirect = NextResponse.redirect(url);
+  for (const cookie of carrying.cookies.getAll()) {
+    redirect.cookies.set(cookie);
+  }
+  return redirect;
 }
 
 export const config = {

@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { Joke } from "@/lib/types";
+
+import { avatarUrl, displayName, initials } from "@/lib/avatar";
+import type { JokeWithAuthor } from "@/lib/types";
 
 // The only Client Component on the page. The list itself is server-rendered;
 // this exists purely so the punchline can stay hidden until asked for.
-export function JokeCard({ joke }: { joke: Joke }) {
+export function JokeCard({ joke }: { joke: JokeWithAuthor }) {
   const [revealed, setRevealed] = useState(false);
+
+  const author = displayName(joke.author?.first_name, joke.author?.last_name);
+  const photo = avatarUrl(joke.author?.avatar_path);
 
   return (
     <article className="card">
@@ -39,6 +44,16 @@ export function JokeCard({ joke }: { joke: Joke }) {
       <p className={`card__punchline${revealed ? " card__punchline--shown" : ""}`} hidden={!revealed}>
         {joke.punchline}
       </p>
+
+      {/* Seeded jokes have no author; only submitted ones get a byline. */}
+      {author ? (
+        <p className="byline">
+          <span className="avatar avatar--xs" aria-hidden="true">
+            {photo ? <img src={photo} alt="" /> : initials(joke.author?.first_name, joke.author?.last_name)}
+          </span>
+          {author}
+        </p>
+      ) : null}
     </article>
   );
 }
