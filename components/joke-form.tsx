@@ -46,47 +46,29 @@ export function JokeForm({
         />
       </div>
 
-      <div className="form__row">
-        <div className="field">
-          <label className="label" htmlFor="category">
-            Category
-          </label>
-          {/* Free text with suggestions, so the seeded categories stay
-              consistent without locking out new ones. */}
-          <input
-            id="category"
-            name="category"
-            className="input"
-            list="joke-categories"
-            maxLength={40}
-            placeholder="Programming"
-            required
-          />
-          <datalist id="joke-categories">
-            {categories.map((category) => (
-              <option key={category} value={category} />
-            ))}
-          </datalist>
-        </div>
-
-        <div className="field field--narrow">
-          <label className="label" htmlFor="rating">
-            Rating
-          </label>
-          <select
-            id="rating"
-            name="rating"
-            className="input"
-            defaultValue="3"
-            required
-          >
-            {[1, 2, 3, 4, 5].map((value) => (
-              <option key={value} value={value}>
-                {"★".repeat(value)}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="field">
+        <label className="label" htmlFor="category">
+          Category
+        </label>
+        {/* Free text with suggestions, so the seeded categories stay
+            consistent without locking out new ones. */}
+        <input
+          id="category"
+          name="category"
+          className="input"
+          list="joke-categories"
+          maxLength={40}
+          placeholder="Programming"
+          required
+        />
+        <datalist id="joke-categories">
+          {categories.map((category) => (
+            <option key={category} value={category} />
+          ))}
+        </datalist>
+        <p className="field__hint">
+          No rating to pick — the stars come from what readers vote.
+        </p>
       </div>
 
       {state.error ? (

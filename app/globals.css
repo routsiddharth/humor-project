@@ -144,14 +144,48 @@ body {
   white-space: nowrap;
 }
 
-.stars {
-  color: var(--star);
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
+/* Average rating. Two identical star rows stacked, the gold one clipped to a
+   percentage width, so 3.5 shows as three and a half filled stars.
+   No letter-spacing here on purpose: trailing space after the fifth star would
+   make 100% overshoot the visible stars. */
+.rating-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
 }
 
-.stars__empty {
+.stars-meter {
+  position: relative;
+  display: inline-block;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.stars-meter__track {
+  color: var(--star);
   opacity: 0.22;
+}
+
+.stars-meter__fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  overflow: hidden;
+  color: var(--star);
+  white-space: nowrap;
+}
+
+.rating-summary__text {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-summary__count {
+  opacity: 0.7;
+  font-weight: 500;
 }
 
 .card__setup {
@@ -541,4 +575,102 @@ body {
   border-color: color-mix(in srgb, var(--ok) 45%, var(--card-border));
   color: var(--ok);
   margin-bottom: 1.25rem;
+}
+
+/* ---------- rating control ---------- */
+
+.card__foot {
+  margin-top: 0.15rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--card-border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 0.75rem;
+}
+
+/* The byline's own top rule would double up with the footer's. */
+.card__foot .byline {
+  margin-top: 0;
+}
+
+.rate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.rate__label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.rate__stars {
+  display: inline-flex;
+}
+
+.rate__star {
+  padding: 0 0.05rem;
+  border: 0;
+  background: none;
+  color: var(--star);
+  opacity: 0.22;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.rate__star--on {
+  opacity: 1;
+}
+
+.rate__stars:hover .rate__star--on {
+  transform: scale(1.12);
+}
+
+.rate__star:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 3px;
+  opacity: 1;
+}
+
+.rate__hint {
+  font-size: 0.66rem;
+  opacity: 0.7;
+}
+
+.rate__error {
+  color: var(--accent);
+  font-size: 0.7rem;
+}
+
+.rate--signed-out {
+  font-size: 0.72rem;
+}
+
+.rate__link {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.rate__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rate__star {
+    transition: none;
+  }
+
+  .rate__stars:hover .rate__star--on {
+    transform: none;
+  }
 }

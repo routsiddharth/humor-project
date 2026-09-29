@@ -21,7 +21,6 @@ export async function submitJoke(
   const setup = String(formData.get("setup") ?? "").trim();
   const punchline = String(formData.get("punchline") ?? "").trim();
   const category = String(formData.get("category") ?? "").trim();
-  const rating = Number(formData.get("rating"));
 
   if (!setup || !punchline || !category) {
     return { error: "Setup, punchline and category are all required." };
@@ -29,16 +28,16 @@ export async function submitJoke(
   if (setup.length > 280 || punchline.length > 280) {
     return { error: "Setup and punchline must be 280 characters or fewer." };
   }
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    return { error: "Pick a rating between 1 and 5." };
-  }
 
+  // No rating is submitted with the joke: stars are the average of what other
+  // people vote, so it starts unrated and shows none.
+  //
   // author_id is checked twice over: here, and by the insert policy
   // (auth.uid() = author_id), which is what stops a forged direct POST from
   // attributing a joke to someone else.
   const { error } = await supabase
     .from("jokes")
-    .insert({ setup, punchline, category, rating, author_id: user.id });
+    .insert({ setup, punchline, category, author_id: user.id });
 
   if (error) return { error: error.message };
 
