@@ -1,94 +1,54 @@
-import { JokeCard } from "@/components/joke-card";
-import { createClient } from "@/lib/supabase/server";
-import type { JokeForViewer, JokeWithAuthor } from "@/lib/types";
+import { redirect } from "next/navigation";
 
-// Reads cookies (for the auth session), so this renders per-request rather
-// than being frozen at build time.
+import { GoogleButton } from "@/components/google-button";
+import { getUser } from "@/lib/auth";
+import { HOME } from "@/lib/routes";
+
+// Reads cookies to decide whether to bounce, so it renders per request.
 export const dynamic = "force-dynamic";
 
-export default async function Home({ searchParams }: PageProps<"/">) {
-  const params = await searchParams;
-  const justSubmitted = params.submitted === "1";
-
-  const supabase = await createClient();
-
-  // Runs with the publishable key under RLS — the same access a browser has.
-  // The embedded author resolves through the jokes.author_id → profiles.id
-  // foreign key, so it costs one round trip rather than one per joke.
-  //
-  // !jokes_author_id_fkey names that constraint explicitly, and is required
-  // rather than decorative: `ratings` links jokes to profiles a second way, so
-  // a bare `profiles(...)` is ambiguous and PostgREST refuses the whole query
-  // with "more than one relationship was found".
-  //
-  // rating_avg is NULL for unrated jokes, so they sort last rather than first.
-  const { data: jokes, error } = await supabase
-    .from("jokes")
-    .select("*, author:profiles!jokes_author_id_fkey(first_name, last_name, avatar_path)")
-    .order("rating_avg", { ascending: false, nullsFirst: false })
-    .order("rating_count", { ascending: false })
-    .order("id", { ascending: true })
-    .returns<JokeWithAuthor[]>();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Only ever the viewer's own votes. Nobody else's rating reaches the browser.
-  const myRatings = new Map<number, number>();
-  if (user) {
-    const { data: rows } = await supabase
-      .from("ratings")
-      .select("joke_id, rating")
-      .eq("user_id", user.id)
-      .returns<{ joke_id: number; rating: number }[]>();
-    for (const row of rows ?? []) myRatings.set(row.joke_id, row.rating);
-  }
-
-  const cards: JokeForViewer[] = (jokes ?? []).map((joke) => ({
-    ...joke,
-    myRating: myRatings.get(joke.id) ?? null,
-  }));
+export default async function Landing() {
+  // Signed-in visitors have no use for the pitch.
+  if (await getUser()) redirect(HOME);
 
   return (
-    <main className="page">
-      <header className="page__head">
-        <h1 className="page__title">humor-project</h1>
-        <p className="page__sub">
-          {error
-            ? "Could not reach the database."
-            : `${cards.length} jokes, served from Supabase. Punchlines hidden — tap to reveal.`}
+    <main className="landing">
+      <section className="landing__pitch">
+        <p className="landing__eyebrow">humor-project</p>
+        <h1 className="landing__title">
+          Every punchline
+          <br />
+          is behind the door.
+        </h1>
+        <p className="landing__lede">
+          A small, well-kept pile of setups and punchlines. Sign in to read
+          them, rate them, and leave one of your own.
         </p>
-      </header>
 
-      {justSubmitted ? (
-        <div className="notice notice--ok" role="status">
-          <strong>Posted.</strong> Your joke is in the list below.
+        <div className="landing__cta">
+          <GoogleButton next={HOME} />
         </div>
-      ) : null}
 
-      {error ? (
-        <div className="notice notice--error">
-          <strong>Query failed:</strong> {error.message}
-        </div>
-      ) : !cards.length ? (
-        <div className="notice">
-          No rows returned. If the table has data, the row-level security policy
-          is not letting the anon role read it.
-        </div>
-      ) : (
-        <ul className="grid">
-          {cards.map((joke) => (
-            <li key={joke.id}>
-              <JokeCard joke={joke} signedIn={Boolean(user)} />
-            </li>
-          ))}
-        </ul>
-      )}
+        <p className="landing__note">
+          Google only — nothing to remember, no password to lose.
+        </p>
+      </section>
 
-      <footer className="page__foot">
-        Next.js App Router · Supabase Postgres · deployed on Vercel
-      </footer>
+      {/* Decorative, and hard-coded on purpose: the landing page is the one
+          route that reads no data, so it stays fast and works signed out even
+          though the jokes table is now readable only by authenticated roles. */}
+      <aside className="landing__demo" aria-hidden="true">
+        <article className="card card--demo">
+          <header className="card__head">
+            <span className="chip">Programming</span>
+          </header>
+          <p className="card__setup">Why do programmers prefer dark mode?</p>
+          <p className="card__locked">
+            <span className="card__locked-text">Because light attracts bugs.</span>
+            <span className="card__locked-badge">locked</span>
+          </p>
+        </article>
+      </aside>
     </main>
   );
 }

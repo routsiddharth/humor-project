@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { signOut } from "@/app/auth/actions";
 import { getProfile, getUser } from "@/lib/auth";
+import { HOME } from "@/lib/routes";
 import { avatarUrl, displayName, initials } from "@/lib/avatar";
 
 // Async Server Component rather than logic in the root layout, so the layout
@@ -15,7 +16,9 @@ export async function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <Link href="/" className="site-header__brand">
+        {/* Signed out, the brand goes to the landing page; signed in it goes
+            to the list, since `/` would only bounce them straight back. */}
+        <Link href={user ? HOME : "/"} className="site-header__brand">
           humor-project
         </Link>
 

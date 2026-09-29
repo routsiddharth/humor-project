@@ -1,6 +1,8 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
+
+import { HOME } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
 
@@ -36,10 +38,13 @@ export function isProfileComplete(
 // `?next=//evil.com` would be treated as a path by us and as a host by the
 // browser — a textbook open redirect, and a nasty one mid-OAuth because the
 // URL it hands over carries the auth code.
-export function safeNext(value: string | string[] | null | undefined): string {
+export function safeNext(
+  value: string | string[] | null | undefined,
+  fallback: string = HOME,
+): string {
   const candidate = Array.isArray(value) ? value[0] : value;
   if (!candidate || !candidate.startsWith("/") || candidate.startsWith("//")) {
-    return "/";
+    return fallback;
   }
   return candidate;
 }

@@ -41,6 +41,6 @@ export async function submitJoke(
 
   if (error) return { error: error.message };
 
-  revalidatePath("/");
-  redirect("/?submitted=1");
+  revalidatePath("/jokes");
+  redirect("/jokes?submitted=1");
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { safeNext } from "@/lib/auth";
+import { HOME } from "@/lib/routes";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -107,5 +108,5 @@ export async function completeOnboarding(
 
   // redirect() throws a control-flow exception, so it must sit outside the
   // failure branch above.
-  redirect(safeNext(String(formData.get("next") ?? "/")));
+  redirect(safeNext(String(formData.get("next") ?? HOME)));
 }

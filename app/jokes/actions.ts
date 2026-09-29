@@ -49,6 +49,6 @@ export async function rateJoke(
     if (error) return { error: error.message };
   }
 
-  revalidatePath("/");
+  revalidatePath("/jokes");
   return {};
 }

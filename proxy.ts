@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { HOME, isProtected } from "@/lib/routes";
+
 // NOTE: Next.js 16 deprecated `middleware.ts` and renamed the convention to
 // `proxy.ts` with a `proxy` export. Supabase's published guides still show the
 // old name; that file would simply never run here.
@@ -8,10 +10,12 @@ import { NextResponse, type NextRequest } from "next/server";
 // Auth tokens expire. Server Components cannot write cookies, so without this
 // refresh a user gets logged out mid-session.
 
-// Signed-in-only routes. This is the optimistic check the Next.js docs
-// recommend for Proxy — fast and cookie-based. The pages themselves still call
-// requireUser()/requireCompleteProfile(), which is the authoritative gate.
-const PROTECTED_PREFIXES = ["/profile", "/submit", "/onboarding"];
+// The route list lives in lib/routes.ts so the pages and this file cannot drift
+// apart. This is the optimistic check the Next.js docs recommend for Proxy —
+// fast and cookie-based. The pages themselves still call requireUser() /
+// requireCompleteProfile(), which is the authoritative gate, and since 0004 the
+// jokes/ratings select policies are `to authenticated`, so the database refuses
+// anonymous reads even if both were somehow bypassed.
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -44,11 +48,8 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const needsAuth = PROTECTED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  );
 
-  if (!user && needsAuth) {
+  if (!user && isProtected(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
@@ -59,7 +60,7 @@ export async function proxy(request: NextRequest) {
   // Nothing to log in to when already signed in.
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = HOME;
     url.search = "";
     return redirectKeepingCookies(url, response);
   }
