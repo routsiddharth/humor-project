@@ -6,7 +6,13 @@ export const HOME = "/jokes";
 
 // Signed-in-only routes, shared by the proxy's optimistic check and the
 // per-page gates. `/` is absent on purpose: it is the public landing page.
-export const PROTECTED_PREFIXES = ["/jokes", "/profile", "/submit", "/onboarding"];
+export const PROTECTED_PREFIXES = [
+  "/jokes",
+  "/profile",
+  "/submit",
+  "/generate",
+  "/onboarding",
+];
 
 export function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(

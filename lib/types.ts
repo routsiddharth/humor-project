@@ -4,6 +4,11 @@
 // shape borrows a column from the other.
 export type JokeKind = "text" | "image";
 
+// What wrote a post, which is a different question from what shape it is. 'ai'
+// implies kind === "text": Claude writes text, not pictures, and 0007's
+// jokes_ai_is_text_check refuses any other combination.
+export type JokeSource = "human" | "ai";
+
 export type Joke = {
   id: number;
   kind: JokeKind;
@@ -24,6 +29,17 @@ export type Joke = {
   category: string;
   created_at: string;
   author_id: string | null;
+  // Provenance, kept beside `kind` rather than inside it. author_id is who
+  // posted it either way — on an AI post that means whoever prompted it.
+  source: JokeSource;
+  // Both NULL on a human post and both set on an AI one, enforced by
+  // jokes_provenance_check. `prompt` is what the card reveals.
+  prompt: string | null;
+  model: string | null;
+  // The ledger row this post came out of, or NULL once that row is gone. The
+  // prompt/model above are the card's own copy for exactly that reason, so a
+  // deleted history does not blank the badge on a post that is already public.
+  generation_id: number | null;
   // Maintained by the ratings_changed trigger, never written by the app.
   // NULL with a count of 0 means nobody has voted — the card shows no stars.
   rating_avg: number | null;
@@ -48,3 +64,21 @@ export type JokeWithAuthor = Joke & { author: JokeAuthor | null };
 // The signed-in viewer's own vote, merged in on the server so a card never
 // receives anyone else's rating.
 export type JokeForViewer = JokeWithAuthor & { myRating: number | null };
+
+// One press of Generate: the prompt, and every candidate it came back with. The
+// table is the rate-limit ledger first and the record of rejected phrasings
+// second — a user who generates fifty times and posts once leaves fifty rows
+// here and one in `jokes`.
+export type GenerationCandidate = { setup: string; punchline: string };
+
+export type Generation = {
+  id: number;
+  user_id: string;
+  prompt: string;
+  model: string;
+  category: string;
+  // jsonb. Stored in the order the candidates were offered; which one was
+  // posted is not recorded here, it is jokes.generation_id pointing back.
+  candidates: GenerationCandidate[];
+  created_at: string;
+};

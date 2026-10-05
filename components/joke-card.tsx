@@ -21,9 +21,19 @@ export function JokeCard({
 
   // Shared by both shapes: the chips and average above, the byline and rating
   // below. Only the middle differs.
+  const isAi = joke.source === "ai";
+
   const head = (
     <header className="card__head">
-      <span className="chip">{joke.category}</span>
+      {/* Chips are grouped so the header keeps two flex children and its
+          space-between still pushes the rating to the right edge. */}
+      <span className="card__chips">
+        <span className="chip">{joke.category}</span>
+        {/* The badge is the point of 0007: an AI post is never silently mixed
+            in with the written ones. `model` is NOT NULL whenever source is
+            'ai' (jokes_provenance_check), so there is always a name to show. */}
+        {isAi ? <span className="chip chip--ai">AI · {joke.model}</span> : null}
+      </span>
       {/* Renders nothing while the post is unrated. */}
       <AverageStars average={joke.rating_avg} count={joke.rating_count} />
     </header>
@@ -37,7 +47,7 @@ export function JokeCard({
           <span className="avatar avatar--xs" aria-hidden="true">
             {photo ? <img src={photo} alt="" /> : initials(joke.author?.first_name, joke.author?.last_name)}
           </span>
-          {author}
+          {isAi ? `prompted by ${author}` : author}
         </p>
       ) : null}
 
@@ -75,6 +85,12 @@ export function JokeCard({
   return (
     <article className="card">
       {head}
+
+      {/* Only ever set on an AI post, and optional even there — pressing
+          Generate with the topic box empty is the common case. */}
+      {isAi && joke.prompt ? (
+        <p className="card__prompt">asked for: {joke.prompt}</p>
+      ) : null}
 
       <p className="card__setup">{joke.setup}</p>
 

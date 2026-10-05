@@ -982,3 +982,61 @@ body {
     transition: none;
   }
 }
+
+/* ---------- AI provenance (0007) ---------- */
+
+/* The chips travel together so .card__head keeps exactly two flex children and
+   its space-between still pushes the rating to the right edge. With three
+   children the badge would land in the middle of the header instead. */
+.card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+/* Same shape as a category chip, accent colour, and mixed case: it has to read
+   as a provenance badge rather than as another category you could filter by.
+   Lower case because it carries a model name, and `GEMINI-3.1-FLASH-LITE`
+   shouted in caps is unreadable. */
+.chip--ai {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  text-transform: none;
+  letter-spacing: 0.015em;
+}
+
+.card__prompt {
+  margin-top: -0.25rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* ---------- generate ---------- */
+
+/* Sits below the form inside the same panel, so it needs its own rule off the
+   form rather than panel padding. */
+.draft {
+  margin-top: 1.4rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.draft__title {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.draft__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}

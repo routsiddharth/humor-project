@@ -25,6 +25,9 @@ export async function SiteHeader() {
         <nav className="site-header__nav">
           {user ? (
             <>
+              <Link href="/generate" className="nav-link">
+                Generate
+              </Link>
               <Link href="/submit" className="nav-link">
                 Post something
               </Link>
