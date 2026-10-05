@@ -1,11 +1,9 @@
-// Builds the CDN URL for an object in the public `avatars` bucket.
-//
-// Pure string work, no client instance and no network call, so this is safe to
-// import from both Server and Client Components. Returns null for a profile
-// that has not uploaded a photo, which the callers render as initials.
+import { publicObjectUrl } from "@/lib/storage";
+
+// The CDN URL for a profile photo, or null for a profile that has not uploaded
+// one — which the callers render as initials.
 export function avatarUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${path}`;
+  return publicObjectUrl("avatars", path);
 }
 
 // Initials fallback. Falls back to "?" so the circle is never empty.

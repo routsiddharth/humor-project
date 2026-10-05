@@ -26,7 +26,7 @@ export async function SiteHeader() {
           {user ? (
             <>
               <Link href="/submit" className="nav-link">
-                Post a joke
+                Post something
               </Link>
               <Link href="/profile" className="nav-link nav-link--me">
                 <span className="avatar" aria-hidden="true">

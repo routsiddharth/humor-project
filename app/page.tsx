@@ -21,7 +21,7 @@ export default async function Landing() {
           is behind the door.
         </h1>
         <p className="landing__lede">
-          A small, well-kept pile of setups and punchlines. Sign in to read
+          A small, well-kept pile of jokes and image memes. Sign in to read
           them, rate them, and leave one of your own.
         </p>
 

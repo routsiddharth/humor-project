@@ -1,7 +1,26 @@
+// A post is either a written joke (setup + punchline) or a meme (just the
+// image — its words are in the picture). `kind` says which, and the
+// jokes_payload_check constraint keeps the columns consistent with it: neither
+// shape borrows a column from the other.
+export type JokeKind = "text" | "image";
+
 export type Joke = {
   id: number;
-  setup: string;
-  punchline: string;
+  kind: JokeKind;
+  // Both NULL on a meme, which has no text of its own — whatever it says is
+  // part of the picture.
+  setup: string | null;
+  punchline: string | null;
+  // Object path inside the `memes` bucket, never the image bytes. NULL on a
+  // written joke.
+  image_path: string | null;
+  // Optional, and only ever set on a meme. Used as the image's alt text.
+  image_alt: string | null;
+  // Intrinsic pixel size, read off the header at upload time, so the card can
+  // reserve the image's shape before it loads. NULL on a written joke, and on
+  // a meme whose format the parser did not recognise.
+  image_width: number | null;
+  image_height: number | null;
   category: string;
   created_at: string;
   author_id: string | null;
