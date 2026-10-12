@@ -50,5 +50,6 @@ export async function rateJoke(
   }
 
   revalidatePath("/jokes");
+  revalidatePath("/people/[id]", "page");
   return {};
 }

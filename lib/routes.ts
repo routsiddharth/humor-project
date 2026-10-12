@@ -9,6 +9,7 @@ export const HOME = "/jokes";
 export const PROTECTED_PREFIXES = [
   "/jokes",
   "/profile",
+  "/people",
   "/submit",
   "/generate",
   "/showdown",

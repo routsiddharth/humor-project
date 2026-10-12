@@ -1430,3 +1430,38 @@ body {
     gap: 0.4rem 0.8rem;
   }
 }
+
+/* ---------- Person page ---------- */
+
+.byline__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.byline__link:hover {
+  color: var(--foreground);
+  text-decoration: underline;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.person__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.person__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  margin: -0.75rem 0 1.75rem;
+}
+
+.person__stats .stat {
+  align-items: flex-start;
+}

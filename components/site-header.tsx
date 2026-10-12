@@ -34,7 +34,7 @@ export async function SiteHeader() {
               <Link href="/submit" className="nav-link">
                 Post something
               </Link>
-              <Link href="/profile" className="nav-link nav-link--me">
+              <Link href={`/people/${user.id}`} className="nav-link nav-link--me">
                 <span className="avatar" aria-hidden="true">
                   {photo ? <img src={photo} alt="" /> : initials(profile?.first_name, profile?.last_name)}
                 </span>

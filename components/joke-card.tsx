@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { AverageStars, RateControl } from "@/components/stars";
@@ -47,7 +48,10 @@ export function JokeCard({
           <span className="avatar avatar--xs" aria-hidden="true">
             {photo ? <img src={photo} alt="" /> : initials(joke.author?.first_name, joke.author?.last_name)}
           </span>
-          {isAi ? `prompted by ${author}` : author}
+          {isAi ? "prompted by " : null}
+          <Link href={`/people/${joke.author_id}`} className="byline__link">
+            {author}
+          </Link>
         </p>
       ) : null}
 
