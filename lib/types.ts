@@ -117,26 +117,12 @@ export type ShowdownJokeStats = {
   wins_vs_ai: number;
   losses_vs_ai: number;
   completed: number;
-  // Wilson lower bound on the win rate, 0–1.
-  score: number;
+  // Elo rating. Starts at 1000 and moves with every vote (0010).
+  rating: number;
 };
 
 export type ShowdownJokeRow = ShowdownJokeStats & {
   joke: Pick<Joke, "id" | "setup" | "punchline" | "category" | "source" | "model"> & {
     author: JokeAuthor | null;
   };
-};
-
-// One row of showdown_human_leaderboard(). Counts only — never a voter.
-export type ShowdownHumanRow = {
-  author_id: string;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_path: string | null;
-  jokes: number;
-  wins: number;
-  losses: number;
-  voters: number;
-  score: number;
-  qualified: boolean;
 };

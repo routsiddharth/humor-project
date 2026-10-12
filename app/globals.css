@@ -1288,13 +1288,6 @@ body {
   letter-spacing: 0;
 }
 
-.board__intro {
-  max-width: 44rem;
-  margin-bottom: 1.5rem;
-  color: var(--muted);
-  font-size: 0.88rem;
-  line-height: 1.5;
-}
 
 .board__empty {
   color: var(--muted);
@@ -1370,18 +1363,7 @@ body {
   font-size: 0.78rem;
 }
 
-.entry__person {
-  flex-direction: row;
-  align-items: center;
-  gap: 0.6rem;
-}
 
-.entry__name {
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .entry__stats {
   display: grid;
