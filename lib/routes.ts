@@ -11,6 +11,7 @@ export const PROTECTED_PREFIXES = [
   "/profile",
   "/submit",
   "/generate",
+  "/showdown",
   "/onboarding",
 ];
 

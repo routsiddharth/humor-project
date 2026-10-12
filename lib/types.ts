@@ -82,3 +82,61 @@ export type Generation = {
   candidates: GenerationCandidate[];
   created_at: string;
 };
+
+// ---------- Showdown (0009) ----------
+
+// Everything a voter is allowed to know about a joke before choosing. No
+// source, author, model, prompt or rating — showdown_next_match returns only
+// these columns, and lib/showdown-db.ts copies them field by field so a widened
+// query cannot leak into the props.
+export type ShowdownJoke = { id: number; setup: string; punchline: string };
+
+export type ShowdownPair = {
+  // The match row, which is also the token the vote is checked against.
+  matchId: number;
+  left: ShowdownJoke;
+  right: ShowdownJoke;
+};
+
+// What the vote unlocks.
+export type ShowdownReveal = {
+  winnerId: number;
+  left: { id: number; source: JokeSource };
+  right: { id: number; source: JokeSource };
+};
+
+// One row of showdown_joke_stats, maintained by showdown_vote and never
+// written by the app.
+export type ShowdownJokeStats = {
+  joke_id: number;
+  appearances: number;
+  wins: number;
+  losses: number;
+  wins_vs_human: number;
+  losses_vs_human: number;
+  wins_vs_ai: number;
+  losses_vs_ai: number;
+  completed: number;
+  // Wilson lower bound on the win rate, 0–1.
+  score: number;
+};
+
+export type ShowdownJokeRow = ShowdownJokeStats & {
+  joke: Pick<Joke, "id" | "setup" | "punchline" | "category" | "source" | "model"> & {
+    author: JokeAuthor | null;
+  };
+};
+
+// One row of showdown_human_leaderboard(). Counts only — never a voter.
+export type ShowdownHumanRow = {
+  author_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_path: string | null;
+  jokes: number;
+  wins: number;
+  losses: number;
+  voters: number;
+  score: number;
+  qualified: boolean;
+};
