@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { JokeCard } from "@/components/joke-card";
 import { JokeFilters, type FacetRow } from "@/components/joke-filters";
+import { Masonry } from "@/components/masonry";
 import { requireCompleteProfile } from "@/lib/auth";
 import { parseCategory, parseKind } from "@/lib/memes";
 import { createClient } from "@/lib/supabase/server";
@@ -126,13 +127,13 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
           )}
         </div>
       ) : (
-        <ul className="grid">
+        <Masonry>
           {cards.map((joke) => (
             <li key={joke.id}>
               <JokeCard joke={joke} signedIn />
             </li>
           ))}
-        </ul>
+        </Masonry>
       )}
 
       <footer className="page__foot">
