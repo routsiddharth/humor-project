@@ -3,7 +3,7 @@ import Link from "next/link";
 import { JokeCard } from "@/components/joke-card";
 import { JokeFilters, type FacetRow } from "@/components/joke-filters";
 import { Masonry } from "@/components/masonry";
-import { requireCompleteProfile } from "@/lib/auth";
+import { getViewer } from "@/lib/auth";
 import { parseCategory, parseKind } from "@/lib/memes";
 import { createClient } from "@/lib/supabase/server";
 import type { JokeForViewer, JokeWithAuthor } from "@/lib/types";
@@ -15,10 +15,9 @@ export const metadata = { title: "Jokes & memes · humor-project" };
 export const dynamic = "force-dynamic";
 
 export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
-  // The gate. proxy.ts bounces anonymous visitors before they get here; this is
-  // the authoritative check, and it also catches a signed-in user who never
-  // finished onboarding.
-  const { user } = await requireCompleteProfile("/jokes");
+  // Public: signed-out visitors get the same list, read-only. A signed-in user
+  // who never finished onboarding is still sent to finish it.
+  const viewer = await getViewer("/jokes");
 
   const params = await searchParams;
   const justSubmitted = params.submitted === "1";
@@ -41,9 +40,8 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
   const kind = parseKind(params.kind);
   const category = parseCategory(params.category, categories);
 
-  // Runs as the signed-in user under RLS. Since 0004 the select policy is
-  // `to authenticated`, so this query returns nothing without a session —
-  // the login gate is enforced by the database, not just by the page.
+  // Runs under RLS as whoever is looking. Since 0011 the select policy covers
+  // `anon` too, so this works signed out.
   //
   // !jokes_author_id_fkey names the constraint explicitly, and is required
   // rather than decorative: `ratings` links jokes to profiles a second way, so
@@ -67,12 +65,14 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
 
   // Only ever the viewer's own votes. Nobody else's rating reaches the browser.
   const myRatings = new Map<number, number>();
-  const { data: voteRows } = await supabase
-    .from("ratings")
-    .select("joke_id, rating")
-    .eq("user_id", user.id)
-    .returns<{ joke_id: number; rating: number }[]>();
-  for (const row of voteRows ?? []) myRatings.set(row.joke_id, row.rating);
+  if (viewer) {
+    const { data: voteRows } = await supabase
+      .from("ratings")
+      .select("joke_id, rating")
+      .eq("user_id", viewer.user.id)
+      .returns<{ joke_id: number; rating: number }[]>();
+    for (const row of voteRows ?? []) myRatings.set(row.joke_id, row.rating);
+  }
 
   const cards: JokeForViewer[] = (jokes ?? []).map((joke) => ({
     ...joke,
@@ -130,7 +130,7 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
         <Masonry>
           {cards.map((joke) => (
             <li key={joke.id}>
-              <JokeCard joke={joke} signedIn />
+              <JokeCard joke={joke} signedIn={viewer !== null} />
             </li>
           ))}
         </Masonry>

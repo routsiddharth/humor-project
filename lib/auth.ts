@@ -55,6 +55,19 @@ export async function requireUser(currentPath: string) {
   return user;
 }
 
+// For public pages: null when signed out, so the page can render read-only.
+// A signed-in user who never finished onboarding is still sent to finish it,
+// the same as on the gated pages.
+export async function getViewer(currentPath: string) {
+  const user = await getUser();
+  if (!user) return null;
+  const profile = await getProfile(user.id);
+  if (!isProfileComplete(profile)) {
+    redirect(`/onboarding?next=${encodeURIComponent(currentPath)}`);
+  }
+  return { user, profile: profile as Profile };
+}
+
 // For pages that need a named user: bounces to sign-in when signed out, and to
 // onboarding when signed in but nameless.
 export async function requireCompleteProfile(currentPath: string) {

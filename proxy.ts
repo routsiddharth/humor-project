@@ -13,9 +13,9 @@ import { HOME, isProtected } from "@/lib/routes";
 // The route list lives in lib/routes.ts so the pages and this file cannot drift
 // apart. This is the optimistic check the Next.js docs recommend for Proxy —
 // fast and cookie-based. The pages themselves still call requireUser() /
-// requireCompleteProfile(), which is the authoritative gate, and since 0004 the
-// jokes/ratings select policies are `to authenticated`, so the database refuses
-// anonymous reads even if both were somehow bypassed.
+// requireCompleteProfile(), which is the authoritative gate. Only the writing
+// pages are gated: since 0011 browsing is public, and every write is checked
+// again by its Server Action and by the database's policies.
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

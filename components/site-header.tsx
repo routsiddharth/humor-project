@@ -16,24 +16,24 @@ export async function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        {/* Signed out, the brand goes to the landing page; signed in it goes
-            to the list, since `/` would only bounce them straight back. */}
-        <Link href={user ? HOME : "/"} className="site-header__brand">
+        <Link href={HOME} className="site-header__brand">
           humor-project
         </Link>
 
         <nav className="site-header__nav">
+          {/* Shown signed out too: browsing is public, and the gated ones send
+              a visitor to sign in and then straight back. */}
+          <Link href="/showdown" className="nav-link">
+            Showdown
+          </Link>
+          <Link href="/generate" className="nav-link">
+            Generate
+          </Link>
+          <Link href="/submit" className="nav-link">
+            Post something
+          </Link>
           {user ? (
             <>
-              <Link href="/showdown" className="nav-link">
-                Showdown
-              </Link>
-              <Link href="/generate" className="nav-link">
-                Generate
-              </Link>
-              <Link href="/submit" className="nav-link">
-                Post something
-              </Link>
               <Link href={`/people/${user.id}`} className="nav-link nav-link--me">
                 <span className="avatar" aria-hidden="true">
                   {photo ? <img src={photo} alt="" /> : initials(profile?.first_name, profile?.last_name)}

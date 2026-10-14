@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { startTransition, useOptimistic, useState } from "react";
 
 import { rateJoke } from "@/app/jokes/actions";
@@ -59,11 +60,16 @@ export function RateControl({
   const [hovered, setHovered] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [optimisticRating, setOptimisticRating] = useOptimistic(myRating);
+  // So signing in lands back on the page the visitor wanted to rate from.
+  const pathname = usePathname();
 
   if (!signedIn) {
     return (
       <p className="rate rate--signed-out">
-        <Link href="/login" className="rate__link">
+        <Link
+          href={`/login?next=${encodeURIComponent(pathname)}`}
+          className="rate__link"
+        >
           Sign in
         </Link>{" "}
         to rate

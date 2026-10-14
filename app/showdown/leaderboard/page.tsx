@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { requireCompleteProfile } from "@/lib/auth";
+import { getViewer } from "@/lib/auth";
 import { displayName } from "@/lib/avatar";
 import { formatRecord, formatRating, JOKE_MIN_MATCHES, winRate } from "@/lib/showdown";
 import { createClient } from "@/lib/supabase/server";
@@ -18,7 +18,8 @@ const JOKE_COLUMNS =
   "*, joke:jokes(id, setup, punchline, category, source, model, author:profiles!jokes_author_id_fkey(first_name, last_name, avatar_path))";
 
 export default async function LeaderboardPage() {
-  await requireCompleteProfile("/showdown/leaderboard");
+  // Public. Playing is not: /showdown sends signed-out visitors to sign in.
+  await getViewer("/showdown/leaderboard");
 
   return (
     <main className="page">

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { JokeCard } from "@/components/joke-card";
 import { Masonry } from "@/components/masonry";
-import { requireCompleteProfile } from "@/lib/auth";
+import { getViewer } from "@/lib/auth";
 import { avatarUrl, displayName, initials } from "@/lib/avatar";
 import { createClient } from "@/lib/supabase/server";
 import type { JokeForViewer, JokeWithAuthor, Profile } from "@/lib/types";
@@ -18,8 +18,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function PersonPage({ params }: PageProps<"/people/[id]">) {
   const { id } = await params;
-  const { user } = await requireCompleteProfile(`/people/${id}`);
   if (!UUID.test(id)) notFound();
+  // Public, like /jokes: null when signed out.
+  const viewer = await getViewer(`/people/${id}`);
 
   const supabase = await createClient();
 
@@ -30,7 +31,7 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
     .maybeSingle<Profile>();
   if (!person) notFound();
 
-  const isMe = person.id === user.id;
+  const isMe = person.id === viewer?.user.id;
 
   // Same embed as /jokes — see the note there on why the constraint is named.
   // Newest first: this is someone's history, not a ranking.
@@ -45,11 +46,11 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
   // Only ever the viewer's own votes, as on /jokes.
   const myRatings = new Map<number, number>();
   const ids = (jokes ?? []).map((joke) => joke.id);
-  if (ids.length) {
+  if (viewer && ids.length) {
     const { data: voteRows } = await supabase
       .from("ratings")
       .select("joke_id, rating")
-      .eq("user_id", user.id)
+      .eq("user_id", viewer.user.id)
       .in("joke_id", ids)
       .returns<{ joke_id: number; rating: number }[]>();
     for (const row of voteRows ?? []) myRatings.set(row.joke_id, row.rating);
@@ -129,7 +130,7 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
         <Masonry>
           {cards.map((joke) => (
             <li key={joke.id}>
-              <JokeCard joke={joke} signedIn />
+              <JokeCard joke={joke} signedIn={viewer !== null} />
             </li>
           ))}
         </Masonry>
