@@ -51,6 +51,9 @@ export type Profile = {
   first_name: string | null;
   last_name: string | null;
   avatar_path: string | null;
+  // Opens /admin. Settable only by the service role or the database owner
+  // (0012), never by the user it belongs to.
+  is_superadmin: boolean;
   updated_at: string;
 };
 

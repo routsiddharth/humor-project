@@ -57,6 +57,24 @@ export async function proxy(request: NextRequest) {
     return redirectKeepingCookies(url, response);
   }
 
+  // /admin is superadmins only. The pages check again against the database
+  // (lib/admin/dal.ts); this stops everyone else before any of that runs.
+  // profiles is publicly readable (0011), so the user's own client can see
+  // the flag; any error counts as a no.
+  if (user && (pathname === "/admin" || pathname.startsWith("/admin/"))) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("is_superadmin")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (error || data?.is_superadmin !== true) {
+      const url = request.nextUrl.clone();
+      url.pathname = HOME;
+      url.search = "";
+      return redirectKeepingCookies(url, response);
+    }
+  }
+
   // Nothing to log in to when already signed in.
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();

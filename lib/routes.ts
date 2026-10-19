@@ -13,6 +13,9 @@ export const PROTECTED_PREFIXES = [
   "/generate",
   "/showdown",
   "/onboarding",
+  // Superadmins only. Signing in is the first half; proxy.ts and
+  // lib/admin/dal.ts check profiles.is_superadmin for the second.
+  "/admin",
 ];
 
 // Carve-outs under a protected prefix. The leaderboard only reads aggregates;

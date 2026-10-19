@@ -8,7 +8,8 @@
     "start": "next start",
     "db:check": "node --env-file=.env scripts/check-db.mjs",
     "supabase:check": "node --env-file=.env scripts/check-supabase.mjs",
-    "db:migrate": "node --env-file=.env scripts/migrate.mjs"
+    "db:migrate": "node --env-file=.env scripts/migrate.mjs",
+    "grant-admin": "node --env-file=.env scripts/grant-admin.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.27.0",

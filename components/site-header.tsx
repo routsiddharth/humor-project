@@ -32,6 +32,13 @@ export async function SiteHeader() {
           <Link href="/submit" className="nav-link">
             Post something
           </Link>
+          {profile?.is_superadmin ? (
+            // Only rendered for superadmins. Hiding the tab is a courtesy, not
+            // the lock: /admin checks the flag itself on every request.
+            <Link href="/admin" className="nav-link">
+              Admin
+            </Link>
+          ) : null}
           {user ? (
             <>
               <Link href={`/people/${user.id}`} className="nav-link nav-link--me">
