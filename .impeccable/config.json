@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "border-left: 3px solid var(--s-ai)",
+        "createdAt": "2026-10-19T17:08:18.828Z",
+        "reason": "Pre-existing admin chart styling outside the requested theme-toggle scope; preserving the incumbent visual system."
+      }
+    ]
+  }
+}

@@ -42,7 +42,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .ad-root {
+  :root:not([data-theme]) .ad-root {
     --ad-bg: #111110;
     --surface: #1a1a19;
     --surface-2: #222220;
@@ -70,6 +70,35 @@
     --seq-7: #9ec5f4;
     --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px -14px rgb(0 0 0 / 70%);
   }
+}
+
+:root[data-theme="dark"] .ad-root {
+  --ad-bg: #111110;
+  --surface: #1a1a19;
+  --surface-2: #222220;
+  --border: #2d2d2a;
+  --grid: #282826;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --muted: #8d8c85;
+  --accent: #e0885c;
+  --accent-ink: #1a1a19;
+  --danger: #ef6b66;
+  --good: #5cc27c;
+  --focus: #3987e5;
+  --s-human: #3987e5;
+  --s-ai: #d95926;
+  --s-meme: #199e70;
+  --s-gen: #c98500;
+  --seq-0: #222220;
+  --seq-1: #0d366b;
+  --seq-2: #104281;
+  --seq-3: #184f95;
+  --seq-4: #256abf;
+  --seq-5: #3987e5;
+  --seq-6: #6da7ec;
+  --seq-7: #9ec5f4;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px -14px rgb(0 0 0 / 70%);
 }
 
 .ad-root button, .ad-root input, .ad-root select, .ad-root textarea { font: inherit; color: inherit; }

@@ -4,6 +4,7 @@ import { signOut } from "@/app/auth/actions";
 import { getProfile, getUser } from "@/lib/auth";
 import { HOME } from "@/lib/routes";
 import { avatarUrl, displayName, initials } from "@/lib/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Async Server Component rather than logic in the root layout, so the layout
 // itself stays a plain function and the cookie read is scoped to the header.
@@ -32,6 +33,7 @@ export async function SiteHeader() {
           <Link href="/submit" className="nav-link">
             Post something
           </Link>
+          <ThemeToggle />
           {profile?.is_superadmin ? (
             // Only rendered for superadmins. Hiding the tab is a courtesy, not
             // the lock: /admin checks the flag itself on every request.
