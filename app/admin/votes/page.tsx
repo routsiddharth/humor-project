@@ -38,7 +38,7 @@ async function Ratings({ sp }: { sp: SP }) {
   const starsParam = Number(param(sp.stars, "0"));
   const stars = [1, 2, 3, 4, 5].includes(starsParam) ? starsParam : 0;
   const s = param(sp.source);
-  const source = ["human", "ai", "meme"].includes(s) ? s : "";
+  const source = ["human", "ai"].includes(s) ? s : "";
   const page = pageParam(sp.page);
   const { rows, total, summary } = await listRatings({ stars, source, page });
   const maxStar = Math.max(1, ...summary.by_star);
@@ -76,7 +76,6 @@ async function Ratings({ sp }: { sp: SP }) {
           <option value="">Any post</option>
           <option value="human">Human jokes</option>
           <option value="ai">AI jokes</option>
-          <option value="meme">Memes</option>
         </select>
         <button className="ad-btn">Filter</button>
       </form>
@@ -91,10 +90,10 @@ async function Ratings({ sp }: { sp: SP }) {
                   <td><Link className="ad-row-link" href={`/admin/users/${r.user_id}`}>{fullName(r.first_name, r.last_name)}</Link></td>
                   <td><span className="ad-stars__on">{"★".repeat(r.rating)}</span><span className="ad-stars__off">{"★".repeat(5 - r.rating)}</span></td>
                   <td className="ad-clip">
-                    {r.source === "ai" ? <Link href={`/admin/media/${r.joke_id}`}><JokeText setup={r.setup} kind={r.kind} /></Link> : <JokeText setup={r.setup} kind={r.kind} />}
+                    {r.source === "ai" ? <Link href={`/admin/media/${r.joke_id}`}><JokeText setup={r.setup} /></Link> : <JokeText setup={r.setup} />}
                     <div className="ad-person__sub">#{r.joke_id} · {r.category}</div>
                   </td>
-                  <td><SourceBadge source={r.source} kind={r.kind} /></td>
+                  <td><SourceBadge source={r.source} /></td>
                   <td className="ad-muted">{ago(r.updated_at)}{r.updated_at !== r.created_at && new Date(r.updated_at).getTime() - new Date(r.created_at).getTime() > 1000 ? " · edited" : ""}</td>
                 </tr>
               ))}

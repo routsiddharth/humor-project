@@ -16,19 +16,19 @@ export const PAGE_SIZE = 40;
 export type RatingRow = {
   joke_id: number; user_id: string; rating: number; created_at: string; updated_at: string;
   first_name: string | null; last_name: string | null;
-  kind: string; source: string; setup: string | null; category: string;
+  source: string; setup: string | null; category: string;
 };
 
 export async function listRatings({ stars, source, page }: { stars: number; source: string; page: number }) {
   await assertAdmin();
   const where = `
     where ($1 = 0 or r.rating = $1)
-      and ($2 = '' or (case when j.kind = 'image' then 'meme' else j.source end) = $2)`;
+      and ($2 = '' or j.source = $2)`;
   const params = [stars, source];
   const [rows, count, summary] = await Promise.all([
     query<RatingRow>(
       `select r.joke_id::int, r.user_id, r.rating, r.created_at, r.updated_at,
-              p.first_name, p.last_name, j.kind, j.source, j.setup, j.category
+              p.first_name, p.last_name, j.source, j.setup, j.category
          from public.ratings r
          join public.profiles p on p.id = r.user_id
          join public.jokes j on j.id = r.joke_id

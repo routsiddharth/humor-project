@@ -38,8 +38,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 // to do rather than greeting them with a bare "Sign in".
 function reasonFor(next: string): string {
   if (next.startsWith("/showdown")) return "Sign in to play Showdown.";
-  if (next.startsWith("/submit")) return "Sign in to post a joke or meme.";
+  if (next.startsWith("/submit")) return "Sign in to post a joke.";
   if (next.startsWith("/generate")) return "Sign in to generate a joke.";
-  if (next.startsWith("/jokes") || next.startsWith("/people")) return "Sign in to rate posts.";
+  if (next.startsWith("/jokes") || next.startsWith("/people")) return "Sign in to rate jokes.";
   return "Sign in to rate jokes and play Showdown.";
 }

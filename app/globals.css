@@ -125,9 +125,8 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));
   /* Each card is as tall as its own contents rather than as the tallest card
-     beside it. Stretching was fine when a reveal added two lines of punchline;
-     a revealed meme is several hundred pixels taller, and every neighbour in
-     the row would grow an empty gap to match. */
+     beside it, so revealing one punchline does not open a gap under every
+     neighbour in the row. */
   align-items: start;
   gap: 1rem;
 }
@@ -851,58 +850,7 @@ body {
   text-underline-offset: 2px;
 }
 
-/* ---------- memes ---------- */
-
-/* The picture is the whole post — no setup line above it, no reveal in front
-   of it — so it gets the room a text card spends on its toggle. */
-.card--meme {
-  gap: 0.55rem;
-}
-
-/* Sized by the image's own ratio rather than forced into a frame: a meme matted
-   into a box is a worse meme. The width/height attributes on the element carry
-   the intrinsic size, so the browser reserves the right box before the bytes
-   land and the grid holds still as images stream in. */
-.card__image,
-.media-preview img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  background: var(--chip-bg);
-}
-
-/* A guard, not a frame. Real memes land well inside this; it exists so one
-   pathologically tall upload cannot turn a card into ten screens of scrolling. */
-.card__image {
-  max-height: 40rem;
-  object-fit: contain;
-}
-
-/* The preview is a check that you picked the right file, not the meme itself,
-   so it stays small enough to keep the rest of the form in view. */
-.media-preview img {
-  max-height: 18rem;
-  object-fit: contain;
-  border: 1px solid var(--card-border);
-}
-
-/* ---------- the kind picker ---------- */
-
-/* A fieldset, so the two radios share one label. Kept on block layout: a
-   flex fieldset puts its own legend in the flow and browsers disagree about
-   where. */
-.field--group {
-  display: block;
-  min-width: 0;
-  border: 0;
-}
-
-.field--group > .label {
-  display: block;
-  margin-bottom: 0.4rem;
-}
-
+/* A quieter aside inside a form label, e.g. "optional". */
 .label__aside {
   margin-left: 0.3rem;
   font-weight: 550;
@@ -911,56 +859,8 @@ body {
   opacity: 0.7;
 }
 
-.segmented {
-  display: inline-flex;
-  gap: 0.2rem;
-  padding: 0.2rem;
-  border: 1px solid var(--card-border);
-  border-radius: 10px;
-  background: var(--chip-bg);
-}
-
-.segmented__option {
-  position: relative;
-  padding: 0.4rem 0.8rem;
-  border-radius: 7px;
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 120ms ease, color 120ms ease;
-}
-
-.segmented__option:hover {
-  color: var(--foreground);
-}
-
-.segmented__option--on {
-  background: var(--card);
-  color: var(--foreground);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
-}
-
-/* Hidden by clipping rather than by `display: none`, which would take the
-   radio out of the accessibility tree and off the tab order with it. */
-.segmented__input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  clip-path: inset(50%);
-  opacity: 0;
-}
-
-.segmented__option:has(.segmented__input:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .pill,
-  .segmented__option {
+  .pill {
     transition: none;
   }
 }

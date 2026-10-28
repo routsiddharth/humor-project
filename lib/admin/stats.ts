@@ -15,7 +15,6 @@ export type Totals = {
   onboarded: number;
   admins: number;
   human_jokes: number;
-  memes: number;
   ai_jokes: number;
   ratings: number;
   votes: number;
@@ -27,7 +26,7 @@ export type Totals = {
 
 export type SourceStat = { source: "human" | "ai"; avg_stars: number | null; star_votes: number; avg_elo: number | null; ranked: number };
 export type HeadToHead = { matches: number; ai_wins: number };
-export type StarRow = { grp: "human" | "ai" | "meme"; stars: number; n: number };
+export type StarRow = { grp: "human" | "ai"; stars: number; n: number };
 export type HeatCell = { dow: number; hr: number; n: number };
 export type DayRow = { day: string; posts: number; ratings: number; votes: number; generations: number };
 export type Funnel = { generated: number; posted: number; rated: number; won: number };
@@ -37,7 +36,7 @@ export type Divisive = {
 };
 export type Ranked = { id: number; setup: string; punchline: string; source: string; rating: number; wins: number; losses: number };
 export type Critic = { id: string; first_name: string | null; last_name: string | null; n: number; avg: number };
-export type CategoryRow = { category: string; human: number; ai: number; memes: number; avg_stars: number | null };
+export type CategoryRow = { category: string; human: number; ai: number; avg_stars: number | null };
 export type Topic = { topic: string; n: number };
 export type ModelRow = { model: string; n: number };
 
@@ -58,8 +57,7 @@ export async function getOverview() {
         (select count(*) from public.profiles)::int                                            as users,
         (select count(*) from public.profiles where nullif(btrim(first_name), '') is not null)::int as onboarded,
         (select count(*) from public.profiles where is_superadmin)::int                        as admins,
-        (select count(*) from public.jokes where source = 'human' and kind = 'text')::int     as human_jokes,
-        (select count(*) from public.jokes where kind = 'image')::int                         as memes,
+        (select count(*) from public.jokes where source = 'human')::int                       as human_jokes,
         (select count(*) from public.jokes where source = 'ai')::int                          as ai_jokes,
         (select count(*) from public.ratings)::int                                            as ratings,
         (select count(*) from public.showdown_matches where voted_at is not null)::int        as votes,
@@ -72,13 +70,13 @@ export async function getOverview() {
     query<SourceStat>(`
       select j.source,
              (select avg(r.rating)::float from public.ratings r join public.jokes x on x.id = r.joke_id
-               where x.source = j.source and x.kind = 'text')                   as avg_stars,
+               where x.source = j.source)                                        as avg_stars,
              (select count(*)::int from public.ratings r join public.jokes x on x.id = r.joke_id
-               where x.source = j.source and x.kind = 'text')                   as star_votes,
+               where x.source = j.source)                                        as star_votes,
              avg(s.rating)::float                                               as avg_elo,
              count(s.joke_id)::int                                              as ranked
         from (values ('human'), ('ai')) as j(source)
-        left join public.jokes jj on jj.source = j.source and jj.kind = 'text'
+        left join public.jokes jj on jj.source = j.source
         left join public.showdown_joke_stats s on s.joke_id = jj.id and s.completed > 0
        group by j.source`),
 
@@ -92,7 +90,7 @@ export async function getOverview() {
        where m.voted_at is not null and l.source <> r.source`),
 
     query<StarRow>(`
-      select case when j.kind = 'image' then 'meme' else j.source end as grp,
+      select j.source as grp,
              r.rating::int as stars, count(*)::int as n
         from public.ratings r join public.jokes j on j.id = r.joke_id
        group by 1, 2`),
@@ -143,7 +141,6 @@ export async function getOverview() {
                    count(*) filter (where r.rating = 3), count(*) filter (where r.rating = 4),
                    count(*) filter (where r.rating = 5)]::int[] as dist
         from public.jokes j join public.ratings r on r.joke_id = j.id
-       where j.kind = 'text'
        group by j.id having count(*) >= 2
        order by sd desc, n desc limit 3`),
 
@@ -165,9 +162,8 @@ export async function getOverview() {
 
     query<CategoryRow>(`
       select category,
-             count(*) filter (where source = 'human' and kind = 'text')::int as human,
+             count(*) filter (where source = 'human')::int                   as human,
              count(*) filter (where source = 'ai')::int                      as ai,
-             count(*) filter (where kind = 'image')::int                     as memes,
              avg(rating_avg)::float                                          as avg_stars
         from public.jokes group by category order by count(*) desc limit 10`),
 

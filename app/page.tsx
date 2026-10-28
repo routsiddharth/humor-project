@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 type PreviewJoke = Pick<
   Joke,
-  "id" | "kind" | "setup" | "punchline" | "category" | "source" | "model" | "rating_avg" | "rating_count"
+  "id" | "setup" | "punchline" | "category" | "source" | "model" | "rating_avg" | "rating_count"
 >;
 
 type BoardRow = Pick<ShowdownJokeStats, "joke_id" | "wins" | "losses" | "completed" | "rating"> & {
@@ -36,7 +36,7 @@ export default async function Landing() {
   const [posts, board] = await Promise.all([
     supabase
       .from("jokes")
-      .select("id, kind, setup, punchline, category, source, model, rating_avg, rating_count")
+      .select("id, setup, punchline, category, source, model, rating_avg, rating_count")
       .order("rating_avg", { ascending: false, nullsFirst: false })
       .order("rating_count", { ascending: false })
       .order("id", { ascending: true })
@@ -55,11 +55,8 @@ export default async function Landing() {
   const jokes = posts.data ?? [];
   const rows = board.data ?? [];
 
-  // Written jokes only for the previews: a meme needs its image, and the
-  // Showdown never shows memes.
-  const text = jokes.filter((joke) => joke.kind === "text" && joke.setup && joke.punchline);
-  const rateExample = text[0] ?? null;
-  const rest = text.filter((joke) => joke.id !== rateExample?.id);
+  const rateExample = jokes[0] ?? null;
+  const rest = jokes.filter((joke) => joke.id !== rateExample?.id);
   // One human and one AI joke if there are both, because that is the question
   // Showdown asks. Their badges stay hidden here, same as in a real round.
   const human = rest.find((joke) => joke.source === "human");
@@ -86,8 +83,8 @@ export default async function Landing() {
           Which joke is <em>actually</em> funny?
         </h1>
         <p className="hero__lede">
-          A joke and meme site where everyone gets a vote. <strong>Rate</strong>{" "}
-          posts from one to five stars, or play <strong>Showdown</strong>: two
+          A joke site where everyone gets a vote. <strong>Rate</strong>{" "}
+          jokes from one to five stars, or play <strong>Showdown</strong>: two
           jokes, no names, you pick the funnier one, then find out whether a
           person or an AI wrote it.
         </p>
@@ -101,7 +98,7 @@ export default async function Landing() {
         </div>
         {jokes.length ? (
           <p className="hero__stats">
-            <Stat value={jokes.length} label={jokes.length === 1 ? "post" : "posts"} />
+            <Stat value={jokes.length} label={jokes.length === 1 ? "joke" : "jokes"} />
             <Stat value={ratings} label={ratings === 1 ? "rating" : "ratings"} />
             <Stat value={votes} label={votes === 1 ? "Showdown vote" : "Showdown votes"} />
           </p>
@@ -119,10 +116,10 @@ export default async function Landing() {
           <header className="feature__head">
             <span className="feature__num" aria-hidden="true">1</span>
             <div>
-              <h2 className="feature__title">Rate jokes &amp; memes</h2>
+              <h2 className="feature__title">Rate jokes</h2>
               <p className="feature__text">
                 Read the setup, tap to reveal the punchline, give it one to five
-                stars. The best-rated posts rise to the top of the list.
+                stars. The best-rated jokes rise to the top of the list.
               </p>
             </div>
           </header>
@@ -230,7 +227,7 @@ export default async function Landing() {
         <p className="extras__text">
           Got one of your own?{" "}
           <Link href="/submit" className="notice__link">
-            Post a joke or meme
+            Post a joke
           </Link>
           , or{" "}
           <Link href="/generate" className="notice__link">

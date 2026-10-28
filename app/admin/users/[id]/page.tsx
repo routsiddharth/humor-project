@@ -57,10 +57,10 @@ export default async function UserPage({ params }: PageProps<"/admin/users/[id]"
                   <tr key={p.id}>
                     <td className="ad-clip">
                       {p.source === "ai"
-                        ? <Link className="ad-row-link" href={`/admin/media/${p.id}`}><JokeText setup={p.setup} punchline={p.punchline} kind={p.kind} /></Link>
-                        : <JokeText setup={p.setup} punchline={p.punchline} kind={p.kind} />}
+                        ? <Link className="ad-row-link" href={`/admin/media/${p.id}`}><JokeText setup={p.setup} punchline={p.punchline} /></Link>
+                        : <JokeText setup={p.setup} punchline={p.punchline} />}
                     </td>
-                    <td><SourceBadge source={p.source} kind={p.kind} /></td>
+                    <td><SourceBadge source={p.source} /></td>
                     <td>{p.category}</td>
                     <td><Stars value={p.rating_avg} count={p.rating_count} /></td>
                     <td className="ad-r">{p.elo ? Math.round(p.elo) : "—"}</td>
@@ -82,7 +82,7 @@ export default async function UserPage({ params }: PageProps<"/admin/users/[id]"
                 <tbody>
                   {ratings.map((r) => (
                     <tr key={r.joke_id}>
-                      <td className="ad-clip"><JokeText setup={r.setup} kind={r.kind} /></td>
+                      <td className="ad-clip"><JokeText setup={r.setup} /></td>
                       <td><span className="ad-stars__on">{"★".repeat(r.rating)}</span><span className="ad-stars__off">{"★".repeat(5 - r.rating)}</span></td>
                       <td className="ad-muted">{ago(r.updated_at)}</td>
                     </tr>

@@ -5,7 +5,6 @@ import { useState } from "react";
 
 import { AverageStars, RateControl } from "@/components/stars";
 import { avatarUrl, displayName, initials } from "@/lib/avatar";
-import { memeImageUrl } from "@/lib/memes";
 import type { JokeForViewer } from "@/lib/types";
 
 export function JokeCard({
@@ -20,8 +19,6 @@ export function JokeCard({
   const author = displayName(joke.author?.first_name, joke.author?.last_name);
   const photo = avatarUrl(joke.author?.avatar_path);
 
-  // Shared by both shapes: the chips and average above, the byline and rating
-  // below. Only the middle differs.
   const isAi = joke.source === "ai";
 
   const head = (
@@ -59,33 +56,7 @@ export function JokeCard({
     </footer>
   );
 
-  const image = memeImageUrl(joke.image_path);
-
-  // A meme is the picture. There is nothing to reveal — whatever it says is
-  // already in the image — so it just sits there and you scroll past it.
-  if (joke.kind === "image" && image) {
-    return (
-      <article className="card card--meme">
-        {head}
-        {/* width/height are the intrinsic pixel size, so the browser reserves
-            the right box before the bytes land and the grid stops jumping as
-            images stream in. The CSS overrides the rendered size; these two
-            only establish the ratio. */}
-        <img
-          className="card__image"
-          src={image}
-          alt={joke.image_alt ?? "Meme"}
-          width={joke.image_width ?? undefined}
-          height={joke.image_height ?? undefined}
-          loading="lazy"
-          decoding="async"
-        />
-        {foot}
-      </article>
-    );
-  }
-
-  // A written joke keeps its punchline behind the tap.
+  // The punchline stays behind the tap.
   return (
     <article className="card">
       {head}

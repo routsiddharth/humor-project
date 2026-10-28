@@ -69,14 +69,14 @@ export async function getUser(id: string) {
   if (!user) return null;
 
   const [posts, ratings, generations] = await Promise.all([
-    query<{ id: number; kind: string; source: string; setup: string | null; punchline: string | null;
+    query<{ id: number; source: string; setup: string | null; punchline: string | null;
             category: string; rating_avg: number | null; rating_count: number; created_at: string; elo: number | null }>(
-      `select j.id::int, j.kind, j.source, j.setup, j.punchline, j.category, j.rating_avg::float,
+      `select j.id::int, j.source, j.setup, j.punchline, j.category, j.rating_avg::float,
               j.rating_count, j.created_at, s.rating::float as elo
          from public.jokes j left join public.showdown_joke_stats s on s.joke_id = j.id and s.completed > 0
         where j.author_id = $1 order by j.created_at desc limit 100`, [id]),
-    query<{ joke_id: number; rating: number; updated_at: string; setup: string | null; kind: string; source: string }>(
-      `select r.joke_id::int, r.rating, r.updated_at, j.setup, j.kind, j.source
+    query<{ joke_id: number; rating: number; updated_at: string; setup: string | null; source: string }>(
+      `select r.joke_id::int, r.rating, r.updated_at, j.setup, j.source
          from public.ratings r join public.jokes j on j.id = r.joke_id
         where r.user_id = $1 order by r.updated_at desc limit 100`, [id]),
     query<{ id: number; prompt: string | null; model: string; category: string; created_at: string; posted_id: number | null }>(

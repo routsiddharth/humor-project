@@ -25,10 +25,10 @@ export function Stars({ value, count }: { value: number | null; count?: number }
   );
 }
 
-const SOURCE_LABEL = { human: "Human", ai: "AI", meme: "Meme" } as const;
+const SOURCE_LABEL = { human: "Human", ai: "AI" } as const;
 
-export function SourceBadge({ source, kind }: { source: string; kind?: string }) {
-  const key = kind === "image" ? "meme" : source === "ai" ? "ai" : "human";
+export function SourceBadge({ source }: { source: string }) {
+  const key = source === "ai" ? "ai" : "human";
   return (
     <span className="ad-badge">
       <span className={`ad-dot ad-bg-${key}`} />
@@ -55,8 +55,7 @@ export function Pager({ page, pageSize, total, params, path }:
   );
 }
 
-export function JokeText({ setup, punchline, kind }: { setup: string | null; punchline?: string | null; kind?: string }) {
-  if (kind === "image") return <span className="ad-muted">[image meme]</span>;
+export function JokeText({ setup, punchline }: { setup: string | null; punchline?: string | null }) {
   return (
     <span className="ad-joke">
       <span className="ad-joke__setup">{setup}</span>

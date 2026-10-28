@@ -1,35 +1,17 @@
-// A post is either a written joke (setup + punchline) or a meme (just the
-// image — its words are in the picture). `kind` says which, and the
-// jokes_payload_check constraint keeps the columns consistent with it: neither
-// shape borrows a column from the other.
-export type JokeKind = "text" | "image";
-
-// What wrote a post, which is a different question from what shape it is. 'ai'
-// implies kind === "text": Claude writes text, not pictures, and 0007's
-// jokes_ai_is_text_check refuses any other combination.
+// What wrote a joke: a person, or a prompt chain run on someone's behalf.
 export type JokeSource = "human" | "ai";
 
 export type Joke = {
   id: number;
-  kind: JokeKind;
-  // Both NULL on a meme, which has no text of its own — whatever it says is
-  // part of the picture.
-  setup: string | null;
-  punchline: string | null;
-  // Object path inside the `memes` bucket, never the image bytes. NULL on a
-  // written joke.
-  image_path: string | null;
-  // Optional, and only ever set on a meme. Used as the image's alt text.
-  image_alt: string | null;
-  // Intrinsic pixel size, read off the header at upload time, so the card can
-  // reserve the image's shape before it loads. NULL on a written joke, and on
-  // a meme whose format the parser did not recognise.
-  image_width: number | null;
-  image_height: number | null;
+  // Always "text" since 0017 dropped memes. The column stays because the
+  // Showdown and generation SQL still filter on it.
+  kind: "text";
+  setup: string;
+  punchline: string;
   category: string;
   created_at: string;
   author_id: string | null;
-  // Provenance, kept beside `kind` rather than inside it. author_id is who
+  // Provenance. author_id is who
   // posted it either way — on an AI post that means whoever prompted it.
   source: JokeSource;
   // Both NULL on a human post and both set on an AI one, enforced by

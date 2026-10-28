@@ -127,7 +127,6 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 const GROUPS = [
   { key: "human", label: "Human jokes", color: "var(--s-human)" },
   { key: "ai", label: "AI jokes", color: "var(--s-ai)" },
-  { key: "meme", label: "Memes", color: "var(--s-meme)" },
 ] as const;
 
 export function StarHistograms({ rows }: { rows: StarRow[] }) {
@@ -213,11 +212,10 @@ export function FunnelBars({ funnel }: { funnel: Funnel }) {
 // ---------- categories: stacked horizontal bars ----------
 
 export function CategoryBars({ rows }: { rows: CategoryRow[] }) {
-  const max = Math.max(1, ...rows.map((r) => r.human + r.ai + r.memes));
+  const max = Math.max(1, ...rows.map((r) => r.human + r.ai));
   const parts = [
     { key: "human", label: "Human", color: "var(--s-human)" },
     { key: "ai", label: "AI", color: "var(--s-ai)" },
-    { key: "memes", label: "Memes", color: "var(--s-meme)" },
   ] as const;
   return (
     <div className="ad-chart">
@@ -226,10 +224,10 @@ export function CategoryBars({ rows }: { rows: CategoryRow[] }) {
       </div>
       <div className="ad-hbars">
         {rows.map((r) => {
-          const total = r.human + r.ai + r.memes;
+          const total = r.human + r.ai;
           const segs = parts.filter((p) => r[p.key] > 0);
           return (
-            <div key={r.category} className="ad-hbar" data-tip={`${r.category}: ${total} posts\n${r.human} human · ${r.ai} AI · ${r.memes} memes\nAvg ${r.avg_stars ? r.avg_stars.toFixed(2) + "★" : "unrated"}`}>
+            <div key={r.category} className="ad-hbar" data-tip={`${r.category}: ${total} jokes\n${r.human} human · ${r.ai} AI\nAvg ${r.avg_stars ? r.avg_stars.toFixed(2) + "★" : "unrated"}`}>
               <span className="ad-hbar__label" title={r.category}>{r.category}</span>
               <span className="ad-hbar__track" style={{ width: `${(total / max) * 100}%` }}>
                 {segs.map((p) => (

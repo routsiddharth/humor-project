@@ -1,7 +1,7 @@
 /* Admin panel styles. Every class is prefixed `ad-` and every token and
    element rule is scoped to .ad-root, so nothing here can restyle the public
    site and globals.css cannot reach in. Series colours are the validated
-   dataviz reference palette: human = blue, AI = orange, meme = aqua,
+   dataviz reference palette: human = blue, AI = orange,
    generations = yellow. */
 
 /* ---------- tokens ---------- */
@@ -22,7 +22,6 @@
   --focus: #2a78d6;
   --s-human: #2a78d6;
   --s-ai: #eb6834;
-  --s-meme: #1baf7a;
   --s-gen: #eda100;
   --seq-0: #f0efeb;
   --seq-1: #cde2fb;
@@ -58,7 +57,6 @@
     --focus: #3987e5;
     --s-human: #3987e5;
     --s-ai: #d95926;
-    --s-meme: #199e70;
     --s-gen: #c98500;
     --seq-0: #222220;
     --seq-1: #0d366b;
@@ -88,7 +86,6 @@
   --focus: #3987e5;
   --s-human: #3987e5;
   --s-ai: #d95926;
-  --s-meme: #199e70;
   --s-gen: #c98500;
   --seq-0: #222220;
   --seq-1: #0d366b;
@@ -208,7 +205,6 @@
 .ad-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .ad-bg-human { background: var(--s-human); }
 .ad-bg-ai { background: var(--s-ai); }
-.ad-bg-meme { background: var(--s-meme); }
 .ad-bg-gen { background: var(--s-gen); }
 
 /* ---------- charts (HTML/CSS marks) ---------- */

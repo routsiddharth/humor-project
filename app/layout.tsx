@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "humor-project",
   description:
-    "Rate jokes and memes from one to five stars, or play Showdown: two anonymous jokes, pick the funnier one, then find out if a human or an AI wrote it.",
+    "Rate jokes from one to five stars, or play Showdown: two anonymous jokes, pick the funnier one, then find out if a human or an AI wrote it.",
 };
 
 export const viewport: Viewport = {

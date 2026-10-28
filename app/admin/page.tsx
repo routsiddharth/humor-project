@@ -81,7 +81,7 @@ export default async function OverviewPage() {
           value={num(t.posts_7d)}
           meta={<span className={postDelta > 0 ? "ad-delta--up" : postDelta < 0 ? "ad-delta--down" : ""}>{postDelta >= 0 ? "+" : ""}{postDelta} vs prior week</span>}
         />
-        <Tile label="All posts" value={num(t.human_jokes + t.ai_jokes + t.memes)} meta={`${num(t.memes)} memes · ${num(t.ai_jokes)} AI`} />
+        <Tile label="All jokes" value={num(t.human_jokes + t.ai_jokes)} meta={`${num(t.human_jokes)} human · ${num(t.ai_jokes)} AI`} />
         <Tile label="Star ratings" value={num(t.ratings)} meta={siteAvg ? `${siteAvg.toFixed(2)}★ site average` : "none yet"} />
         <Tile label="Showdown votes" value={num(t.votes)} meta="blind head-to-heads" />
         <Tile label="Gemini calls" value={num(t.generations)} meta={`${pct(o.funnel.posted, o.funnel.generated)} got posted`} />
@@ -115,8 +115,8 @@ export default async function OverviewPage() {
       <section className="ad-card">
         <div className="ad-card__head">
           <div>
-            <div className="ad-card__title">How each kind of post gets rated</div>
-            <div className="ad-card__sub">Share of star ratings at each level — same scale across all three</div>
+            <div className="ad-card__title">How human and AI jokes get rated</div>
+            <div className="ad-card__sub">Share of star ratings at each level — same scale on both</div>
           </div>
         </div>
         <StarHistograms rows={o.stars} />

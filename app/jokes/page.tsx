@@ -1,14 +1,14 @@
 import Link from "next/link";
 
 import { JokeCard } from "@/components/joke-card";
-import { JokeFilters, type FacetRow } from "@/components/joke-filters";
+import { JokeFilters } from "@/components/joke-filters";
 import { Masonry } from "@/components/masonry";
 import { getViewer } from "@/lib/auth";
-import { parseCategory, parseKind } from "@/lib/memes";
+import { parseCategory } from "@/lib/filters";
 import { createClient } from "@/lib/supabase/server";
 import type { JokeForViewer, JokeWithAuthor } from "@/lib/types";
 
-export const metadata = { title: "Rate jokes & memes · humor-project" };
+export const metadata = { title: "Rate jokes · humor-project" };
 
 // Reads cookies (for the auth session), so this renders per-request rather
 // than being frozen at build time.
@@ -24,20 +24,20 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
 
   const supabase = await createClient();
 
-  // Every (kind, category) pair, unfiltered — the vocabulary the filter bar
-  // offers and the numbers on its pills. Two columns across a small table, so
-  // it is cheaper than running a count query per pill.
+  // Every joke's category, unfiltered — the vocabulary the filter bar offers
+  // and the numbers on its pills. One column across a small table, so it is
+  // cheaper than running a count query per pill.
   const { data: facets } = await supabase
     .from("jokes")
-    .select("kind, category")
-    .returns<FacetRow[]>();
+    .select("category")
+    .returns<{ category: string }[]>();
 
-  const rows = facets ?? [];
-  const categories = [...new Set(rows.map((row) => row.category))].sort();
+  const counts = new Map<string, number>();
+  for (const row of facets ?? []) counts.set(row.category, (counts.get(row.category) ?? 0) + 1);
+  const categories = [...counts.keys()].sort();
 
-  // Both filters are validated against what exists rather than trusted, so a
-  // hand-edited URL degrades to the unfiltered view.
-  const kind = parseKind(params.kind);
+  // Validated against what exists rather than trusted, so a hand-edited URL
+  // degrades to the unfiltered view.
   const category = parseCategory(params.category, categories);
 
   // Runs under RLS as whoever is looking. Since 0011 the select policy covers
@@ -53,7 +53,6 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
 
   // Filtering in the query rather than in JS, so the page does not grow a
   // habit of reading the whole table to show a tenth of it.
-  if (kind) query = query.eq("kind", kind);
   if (category) query = query.eq("category", category);
 
   // rating_avg is NULL for unrated posts, so they sort last rather than first.
@@ -79,17 +78,17 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
     myRating: myRatings.get(joke.id) ?? null,
   }));
 
-  const filtered = kind !== null || category !== null;
-  const count = `${cards.length} ${cards.length === 1 ? "post" : "posts"}`;
+  const filtered = category !== null;
+  const count = `${cards.length} ${cards.length === 1 ? "joke" : "jokes"}`;
 
   return (
     <main className="page">
       <header className="page__head">
-        <h1 className="page__title">Rate jokes &amp; memes</h1>
+        <h1 className="page__title">Rate jokes</h1>
         <p className="page__sub">
           {error
             ? "Could not reach the database."
-            : `${count}. Tap a joke to reveal the punchline, then give it one to five stars. Best-rated first.`}
+            : `${count}. Tap one to reveal the punchline, then give it one to five stars. Best-rated first.`}
         </p>
       </header>
 
@@ -101,9 +100,7 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
 
       {error ? null : (
         <JokeFilters
-          rows={rows}
-          categories={categories}
-          kind={kind}
+          categories={categories.map((name) => ({ name, count: counts.get(name) ?? 0 }))}
           category={category}
         />
       )}
@@ -116,7 +113,7 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
         <div className="notice">
           {filtered ? (
             <>
-              Nothing matches those filters.{" "}
+              Nothing in that category.{" "}
               <Link href="/jokes" className="notice__link">
                 Show everything
               </Link>
