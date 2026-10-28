@@ -8,7 +8,7 @@ import { parseCategory, parseKind } from "@/lib/memes";
 import { createClient } from "@/lib/supabase/server";
 import type { JokeForViewer, JokeWithAuthor } from "@/lib/types";
 
-export const metadata = { title: "Jokes & memes · humor-project" };
+export const metadata = { title: "Rate jokes & memes · humor-project" };
 
 // Reads cookies (for the auth session), so this renders per-request rather
 // than being frozen at build time.
@@ -85,11 +85,11 @@ export default async function JokesPage({ searchParams }: PageProps<"/jokes">) {
   return (
     <main className="page">
       <header className="page__head">
-        <h1 className="page__title">Jokes &amp; memes</h1>
+        <h1 className="page__title">Rate jokes &amp; memes</h1>
         <p className="page__sub">
           {error
             ? "Could not reach the database."
-            : `${count}. Jokes keep their punchline until you tap; memes just sit there.`}
+            : `${count}. Tap a joke to reveal the punchline, then give it one to five stars. Best-rated first.`}
         </p>
       </header>
 

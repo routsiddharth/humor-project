@@ -13,7 +13,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <header className="page__head">
         <h1 className="page__title">Sign in</h1>
         <p className="page__sub">
-          Google is the only provider — no password to forget.
+          {reasonFor(typeof params.next === "string" ? next : "")} Google is the only provider — no password to forget.
         </p>
       </header>
 
@@ -32,4 +32,14 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       </div>
     </main>
   );
+}
+
+// The gated pages send visitors here with ?next=, so say what they were trying
+// to do rather than greeting them with a bare "Sign in".
+function reasonFor(next: string): string {
+  if (next.startsWith("/showdown")) return "Sign in to play Showdown.";
+  if (next.startsWith("/submit")) return "Sign in to post a joke or meme.";
+  if (next.startsWith("/generate")) return "Sign in to generate a joke.";
+  if (next.startsWith("/jokes") || next.startsWith("/people")) return "Sign in to rate posts.";
+  return "Sign in to rate jokes and play Showdown.";
 }

@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { signOut } from "@/app/auth/actions";
 import { getProfile, getUser } from "@/lib/auth";
-import { HOME } from "@/lib/routes";
 import { avatarUrl, displayName, initials } from "@/lib/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -17,21 +16,27 @@ export async function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        <Link href={HOME} className="site-header__brand">
+        <Link href="/" className="site-header__brand">
           humor-project
         </Link>
 
         <nav className="site-header__nav">
           {/* Shown signed out too: browsing is public, and the gated ones send
-              a visitor to sign in and then straight back. */}
-          <Link href="/showdown" className="nav-link">
+              a visitor to sign in and then straight back. The two things the
+              site is for come first and louder; making posts sits behind a
+              divider as the secondary pair. */}
+          <Link href="/jokes" className="nav-link nav-link--main">
+            Rate
+          </Link>
+          <Link href="/showdown" className="nav-link nav-link--main">
             Showdown
           </Link>
-          <Link href="/generate" className="nav-link">
-            Generate
-          </Link>
+          <span className="site-header__divider" aria-hidden="true" />
           <Link href="/submit" className="nav-link">
-            Post something
+            Post
+          </Link>
+          <Link href="/generate" className="nav-link nav-link--extra">
+            Generate
           </Link>
           <ThemeToggle />
           {profile?.is_superadmin ? (
