@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { assertAdmin } from "@/lib/admin/dal";
 import { one, pool, query } from "@/lib/admin/db";
-import { generateJoke } from "@/lib/gemini";
+import { runChain, saveTrace } from "@/lib/chain";
 import { MAX_CATEGORY_CHARS, MAX_JOKE_CHARS, MAX_MODEL_CHARS, MAX_PROMPT_CHARS } from "@/lib/admin/limits";
 
 // Every action opens with assertAdmin(). A Server Action is a POST endpoint
@@ -35,9 +35,9 @@ function readFields(formData: FormData): Fields | string {
   return f;
 }
 
-// Asks Gemini for a joke and logs the call to `generations`, exactly as the
-// public /generate page does, so the ledger stays the full record of model
-// calls. Nothing is posted until createAiJoke.
+// Runs a prompt chain from the mix and logs it to `generations` and
+// `llm_responses`, exactly as the public /generate page does, so the ledger
+// stays the full record of model calls. Nothing is posted until createAiJoke.
 export async function draftWithGemini(_prev: DraftState, formData: FormData): Promise<DraftState> {
   const admin = await assertAdmin();
 
@@ -52,18 +52,20 @@ export async function draftWithGemini(_prev: DraftState, formData: FormData): Pr
     [category],
   );
 
-  let joke;
+  let run;
   try {
-    joke = await generateJoke({ category, topic, avoid: avoid.map((r) => r.setup) });
+    run = await runChain({ category, topic, avoid: avoid.map((r) => r.setup) });
   } catch (error) {
-    return { error: `Gemini could not write one: ${error instanceof Error ? error.message : "unknown error"}` };
+    return { error: `The prompt chain could not write one: ${error instanceof Error ? error.message : "unknown error"}` };
   }
+  const { joke } = run;
 
   const row = await one<{ id: number }>(
-    `insert into public.generations (user_id, prompt, model, category, candidates)
-     values ($1, $2, $3, $4, $5::jsonb) returning id::int`,
-    [admin.id, topic, joke.model, category, JSON.stringify([{ setup: joke.setup, punchline: joke.punchline }])],
+    `insert into public.generations (user_id, prompt, model, category, candidates, chain_id)
+     values ($1, $2, $3, $4, $5::jsonb, $6) returning id::int`,
+    [admin.id, topic, joke.model, category, JSON.stringify([{ setup: joke.setup, punchline: joke.punchline }]), run.chain.id],
   );
+  await saveTrace(row!.id, run.chain.id, run.trace);
 
   return {
     draft: { setup: joke.setup, punchline: joke.punchline, model: joke.model, prompt: topic ?? "", category, generationId: row!.id },

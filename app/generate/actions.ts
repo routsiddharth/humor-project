@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { DAILY_LIMIT, MAX_TOPIC_CHARS } from "@/lib/generate";
-import { generateJoke, type GeneratedJoke } from "@/lib/gemini";
+import { listPickableModels, runChain, saveTrace, type ChainRun } from "@/lib/chain";
 import { createClient } from "@/lib/supabase/server";
 import type { GenerationCandidate } from "@/lib/types";
 
@@ -57,6 +57,18 @@ export async function generateDraft(
   // Empty means "just write me one", which is the normal press of the button.
   const topic = topicRaw || null;
 
+  // The model picker. "auto" (or nothing) leaves each step on its own model.
+  // Anything else must be a model the page could have offered: active, with a
+  // provider that has code and a key — runChain checks that again on its own.
+  const modelRaw = String(formData.get("model") ?? "auto");
+  let modelId: number | null = null;
+  if (modelRaw !== "auto") {
+    modelId = Number(modelRaw);
+    if (!Number.isInteger(modelId) || !(await listPickableModels()).some((m) => m.id === modelId)) {
+      return { error: "That model is not available any more. Pick another." };
+    }
+  }
+
   // ---- the quota ----
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { count, error: countError } = await supabase
@@ -78,8 +90,8 @@ export async function generateDraft(
   //
   // Asked cold for a programming joke the model returns the single most famous
   // one, which for this table is already row 1 of the 0001 seed. Sending the
-  // setups it would be competing with is the cheap half of the fix; the system
-  // instruction in lib/gemini.ts is the other half.
+  // setups it would be competing with is the cheap half of the fix; the chain's
+  // own prompts are the other half.
   const { data: existing } = await supabase
     .from("jokes")
     .select("setup")
@@ -93,19 +105,26 @@ export async function generateDraft(
     .map((row) => row.setup)
     .filter((setup): setup is string => Boolean(setup));
 
-  // ---- the call ----
-  let joke: GeneratedJoke;
+  // ---- the chain ----
+  //
+  // A prompt chain from the mix (0013): several calls, each step reading the
+  // ones before it, the last one writing the joke.
+  let run: ChainRun;
   try {
-    joke = await generateJoke({ category, topic, avoid });
+    run = await runChain({ category, topic, avoid }, { modelId });
   } catch (error) {
-    // The chain in lib/gemini.ts has already retried capacity errors, so
+    // lib/llm.ts has already retried capacity errors on every step, so
     // whatever lands here is worth showing rather than retrying again.
     const status = (error as { status?: number } | null)?.status;
     if (status === 429) {
       return { error: "The model is out of quota for now. Try again in a few minutes." };
     }
     if (status === 503 || status === 500) {
-      return { error: "The model is busy right now. Give it a moment and press again." };
+      return {
+        error: modelId
+          ? "That model is busy right now. Try again in a moment, or pick another model."
+          : "The models are busy right now. Give it a moment and press again.",
+      };
     }
     return {
       error: error instanceof Error ? error.message : "Generating failed. Try again.",
@@ -117,6 +136,7 @@ export async function generateDraft(
   // Written after the call succeeds, so a failed request does not spend quota —
   // and so `model` and `candidates` are known rather than guessed. This row is
   // also the only copy that postDraft will trust.
+  const { joke } = run;
   const candidates: GenerationCandidate[] = [
     { setup: joke.setup, punchline: joke.punchline },
   ];
@@ -129,11 +149,21 @@ export async function generateDraft(
       model: joke.model,
       category,
       candidates,
+      chain_id: run.chain.id,
+      model_id: run.picked?.id ?? null,
     })
     .select("id")
     .single<{ id: number }>();
 
   if (ledgerError) return { error: ledgerError.message };
+
+  // The trace is for the admin panel to read. Losing it must not cost the user
+  // a draft they have already spent quota on, so a failure is logged, not shown.
+  try {
+    await saveTrace(ledger.id, run.chain.id, run.trace);
+  } catch (error) {
+    console.error("Could not save the prompt chain trace", error);
+  }
 
   return {
     // `used` was read before this call, so one more is now spent.

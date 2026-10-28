@@ -10,17 +10,21 @@ import {
 } from "@/app/generate/actions";
 import { DAILY_LIMIT, MAX_TOPIC_CHARS } from "@/lib/generate";
 
+export type PickableModel = { id: number; label: string; provider: string };
+
 export function GenerateForm({
   categories,
   used,
-  configured,
+  models,
 }: {
   categories: string[];
   used: number;
-  // Whether GEMINI_API_KEY is set on the server. Checked here so a missing key
-  // reads as a disabled button with an explanation rather than a failed press.
-  configured: boolean;
+  // Active models whose provider has an API key on the server. Empty means
+  // nothing can generate, which reads as a disabled button with an
+  // explanation rather than a failed press.
+  models: PickableModel[];
 }) {
+  const configured = models.length > 0;
   const initialGenerate: GenerateState = {};
   const initialPost: PostState = {};
 
@@ -35,6 +39,7 @@ export function GenerateForm({
   // once a form action settles.
   const [category, setCategory] = useState(categories[0] ?? "");
   const [topic, setTopic] = useState("");
+  const [model, setModel] = useState("auto");
 
   const draft = genState.draft;
   // The action reports the quota back, because it does not revalidate this page.
@@ -87,6 +92,36 @@ export function GenerateForm({
           </p>
         </div>
 
+        <div className="field">
+          <label className="label" htmlFor="model">
+            Model
+          </label>
+          <select
+            id="model"
+            name="model"
+            className="input"
+            value={model}
+            onChange={(event) => setModel(event.target.value)}
+          >
+            <option value="auto">Auto — each step on its own model</option>
+            {[...new Set(models.map((m) => m.provider))].map((provider) => (
+              <optgroup key={provider} label={provider}>
+                {models
+                  .filter((m) => m.provider === provider)
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+              </optgroup>
+            ))}
+          </select>
+          <p className="field__hint">
+            Each joke comes out of a chain of prompts, several model calls in a
+            row. Pick a model to run every one of them, or leave it on Auto.
+          </p>
+        </div>
+
         {genState.error ? (
           <p className="field__error" role="alert">
             {genState.error}
@@ -95,7 +130,7 @@ export function GenerateForm({
 
         {!configured ? (
           <p className="field__error" role="alert">
-            GEMINI_API_KEY is not set on the server, so there is nothing to
+            No model has an API key on the server, so there is nothing to
             generate with.
           </p>
         ) : null}

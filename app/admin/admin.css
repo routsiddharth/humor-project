@@ -399,15 +399,15 @@ dl.ad-facts dd { min-width: 0; overflow-wrap: anywhere; }
 .ad-quote p + p { color: var(--text-2); margin-top: 6px; }
 
 
-/* ---------- study database ---------- */
+/* ---------- pipeline (prompt chains) ---------- */
 
-.ad-studynav { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; margin: -8px 0 24px; font-size: 13px; }
-.ad-studynav__group { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; }
-.ad-studynav__label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-right: 6px; }
-.ad-studynav a { padding: 4px 8px; border-radius: 6px; color: var(--text-2); }
-.ad-studynav a:hover { background: var(--surface-2); color: var(--text); }
-.ad-studynav a[aria-current="page"] { background: var(--surface-2); color: var(--text); font-weight: 500; }
-.ad-studynav__home { font-weight: 500; }
+.ad-secnav { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; margin: -8px 0 24px; font-size: 13px; }
+.ad-secnav__group { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; }
+.ad-secnav__label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-right: 6px; }
+.ad-secnav a { padding: 4px 8px; border-radius: 6px; color: var(--text-2); }
+.ad-secnav a:hover { background: var(--surface-2); color: var(--text); }
+.ad-secnav a[aria-current="page"] { background: var(--surface-2); color: var(--text); font-weight: 500; }
+.ad-secnav__home { font-weight: 500; }
 
 .ad-tile--link { display: block; transition: border-color 120ms; }
 .ad-tile--link:hover { border-color: var(--accent); }
@@ -418,17 +418,20 @@ dl.ad-facts dd { min-width: 0; overflow-wrap: anywhere; }
 .ad-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 .ad-check input { width: 16px; height: 16px; accent-color: var(--accent); }
 
-.ad-thumb { display: block; flex: none; overflow: hidden; border-radius: 6px; background: var(--surface-2); }
-.ad-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.ad-thumb--fill { width: 100%; aspect-ratio: 4 / 3; }
-.ad-hero-img { display: block; width: 100%; max-height: 560px; object-fit: contain; background: var(--surface-2); }
-
-.ad-media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
-.ad-media-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: border-color 120ms; }
-.ad-media-card:hover { border-color: var(--accent); }
-.ad-media-card .ad-thumb { border-radius: 0; }
-.ad-media-card__body { padding: 10px 12px 12px; font-size: 13px; line-height: 1.4; display: flex; flex-direction: column; gap: 6px; }
-.ad-media-card__body .ad-person__sub { overflow-wrap: anywhere; }
+/* A chain's steps, and a run's trace, as a numbered vertical sequence. */
+.ad-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.ad-step { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; }
+.ad-step__num {
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; font-weight: 600;
+}
+.ad-step__body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ad-step__head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.ad-step__name { font-weight: 600; }
+.ad-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
+.ad-list a.ad-joke { color: inherit; display: block; }
+.ad-list a.ad-joke:hover { color: var(--accent); }
+.ad-step--final .ad-step__num { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 
 .ad-prompt { border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
 .ad-prompt summary { cursor: pointer; padding: 8px 12px; font-size: 13px; font-weight: 500; }

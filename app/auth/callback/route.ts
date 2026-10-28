@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isProfileComplete, safeNext } from "@/lib/auth";
+import { maySignIn } from "@/lib/signup";
 import { createClient } from "@/lib/supabase/server";
 
 // Where Google sends the user back to, via Supabase. Registered in Supabase's
@@ -37,6 +38,13 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error || !data.user) {
     return toLogin(error?.message ?? "Could not complete sign-in.");
+  }
+
+  // The signup lists in the admin panel. The session cookie was just set by the
+  // exchange, so a refused account is signed straight back out.
+  if (!(await maySignIn(data.user.id, data.user.email))) {
+    await supabase.auth.signOut();
+    return toLogin("That Google account is not on the list for this site. Sign in with an allowed address.");
   }
 
   // By now the on_auth_user_created trigger has inserted the profile row, but

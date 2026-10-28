@@ -1,5 +1,6 @@
 import { GenerateForm } from "@/components/generate-form";
 import { requireCompleteProfile } from "@/lib/auth";
+import { listPickableModels } from "@/lib/chain";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Generate a joke · humor-project" };
@@ -32,6 +33,14 @@ export default async function GeneratePage() {
     .eq("user_id", user.id)
     .gte("created_at", since);
 
+  // The picker's options: active models whose provider has code and a key.
+  // Only what the form needs crosses to the client.
+  const models = (await listPickableModels()).map((m) => ({
+    id: m.id,
+    label: m.name,
+    provider: m.provider === "openai" ? "OpenAI" : m.provider === "google" ? "Google" : m.provider,
+  }));
+
   return (
     <main className="page page--narrow">
       <header className="page__head">
@@ -46,7 +55,7 @@ export default async function GeneratePage() {
         <GenerateForm
           categories={categories}
           used={count ?? 0}
-          configured={Boolean(process.env.GEMINI_API_KEY)}
+          models={models}
         />
       </div>
     </main>

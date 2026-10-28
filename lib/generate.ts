@@ -1,9 +1,9 @@
 // Shared limits for the generate flow.
 //
 // Deliberately free of server-only imports, and deliberately not in
-// lib/gemini.ts or app/generate/actions.ts — the same reasoning as lib/memes.ts.
+// lib/chain.ts or app/generate/actions.ts — the same reasoning as lib/memes.ts.
 // The form is a Client Component and needs these for its own maxLength and its
-// own copy: lib/gemini.ts is `server-only`, so importing from it would be a
+// own copy: lib/chain.ts is `server-only`, so importing from it would be a
 // build error, and a "use server" module may only export async functions, so a
 // plain constant cannot live there either.
 
