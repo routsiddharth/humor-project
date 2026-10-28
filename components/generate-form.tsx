@@ -11,11 +11,13 @@ import {
 import { DAILY_LIMIT, MAX_TOPIC_CHARS } from "@/lib/generate";
 
 export type PickableModel = { id: number; label: string; provider: string };
+export type PickableStyle = { id: number; name: string; description: string | null };
 
 export function GenerateForm({
   categories,
   used,
   models,
+  styles,
 }: {
   categories: string[];
   used: number;
@@ -23,6 +25,8 @@ export function GenerateForm({
   // nothing can generate, which reads as a disabled button with an
   // explanation rather than a failed press.
   models: PickableModel[];
+  // The prompt chains the mix can draw, offered as styles.
+  styles: PickableStyle[];
 }) {
   const configured = models.length > 0;
   const initialGenerate: GenerateState = {};
@@ -40,6 +44,8 @@ export function GenerateForm({
   const [category, setCategory] = useState(categories[0] ?? "");
   const [topic, setTopic] = useState("");
   const [model, setModel] = useState("auto");
+  const [style, setStyle] = useState("mix");
+  const picked = styles.find((s) => String(s.id) === style);
 
   const draft = genState.draft;
   // The action reports the quota back, because it does not revalidate this page.
@@ -93,6 +99,30 @@ export function GenerateForm({
         </div>
 
         <div className="field">
+          <label className="label" htmlFor="style">
+            Style
+          </label>
+          <select
+            id="style"
+            name="style"
+            className="input"
+            value={style}
+            onChange={(event) => setStyle(event.target.value)}
+          >
+            <option value="mix">Surprise me</option>
+            {styles.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          <p className="field__hint">
+            {picked?.description ??
+              "Each style is a different chain of prompts. Surprise me picks one at random."}
+          </p>
+        </div>
+
+        <div className="field">
           <label className="label" htmlFor="model">
             Model
           </label>
@@ -117,8 +147,8 @@ export function GenerateForm({
             ))}
           </select>
           <p className="field__hint">
-            Each joke comes out of a chain of prompts, several model calls in a
-            row. Pick a model to run every one of them, or leave it on Auto.
+            A style runs several model calls in a row. Pick a model to run every
+            one of them, or leave it on Auto.
           </p>
         </div>
 
@@ -157,6 +187,7 @@ export function GenerateForm({
       {draft ? (
         <section className="draft" aria-live="polite">
           <h2 className="draft__title">Fresh off the model</h2>
+          <p className="field__hint">Style: {draft.style}</p>
 
           {/* The same card the feed renders, punchline already open: there is
               nothing to reveal to someone who is deciding whether to post it. */}

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { DAILY_LIMIT, MAX_TOPIC_CHARS } from "@/lib/generate";
-import { listPickableModels, runChain, saveTrace, type ChainRun } from "@/lib/chain";
+import { listPickableChains, listPickableModels, runChain, saveTrace, type ChainRun } from "@/lib/chain";
 import { createClient } from "@/lib/supabase/server";
 import type { GenerationCandidate } from "@/lib/types";
 
@@ -30,6 +30,8 @@ export type GenerateState = {
     // after generating cannot make the preview claim a category this joke was
     // not written for. Posting uses the ledger's copy either way.
     category: string;
+    // The chain that wrote it, so a "Surprise me" press shows which style it got.
+    style: string;
   };
 };
 
@@ -66,6 +68,18 @@ export async function generateDraft(
     modelId = Number(modelRaw);
     if (!Number.isInteger(modelId) || !(await listPickableModels()).some((m) => m.id === modelId)) {
       return { error: "That model is not available any more. Pick another." };
+    }
+  }
+
+  // The style picker. "mix" (or nothing) leaves it to the weighted draw; a
+  // chain id must be one the page could have offered — switched on in the mix
+  // and with steps — so a forged POST cannot run a chain an admin turned off.
+  const styleRaw = String(formData.get("style") ?? "mix");
+  let chainId: number | undefined;
+  if (styleRaw !== "mix") {
+    chainId = Number(styleRaw);
+    if (!Number.isInteger(chainId) || !(await listPickableChains()).some((c) => c.id === chainId)) {
+      return { error: "That style is not available any more. Pick another." };
     }
   }
 
@@ -111,7 +125,7 @@ export async function generateDraft(
   // ones before it, the last one writing the joke.
   let run: ChainRun;
   try {
-    run = await runChain({ category, topic, avoid }, { modelId });
+    run = await runChain({ category, topic, avoid }, { chainId, modelId });
   } catch (error) {
     // lib/llm.ts has already retried capacity errors on every step, so
     // whatever lands here is worth showing rather than retrying again.
@@ -151,6 +165,7 @@ export async function generateDraft(
       candidates,
       chain_id: run.chain.id,
       model_id: run.picked?.id ?? null,
+      chain_picked: chainId != null,
     })
     .select("id")
     .single<{ id: number }>();
@@ -174,6 +189,7 @@ export async function generateDraft(
       punchline: joke.punchline,
       model: joke.model,
       category,
+      style: run.chain.name,
     },
   };
 }

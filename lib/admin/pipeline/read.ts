@@ -34,20 +34,20 @@ export type Step = {
   id: number; position: number; name: string; temperature: string | null;
   system_prompt: string; user_prompt: string;
   model_id: number; model_name: string; provider_model_id: string; provider: string; is_active: boolean;
-  calls: number; avg_ms: number | null;
+  calls: number; avg_ms: number | null; updated_at: Date;
 };
 
 export type RunRow = {
   id: number; created_at: Date; category: string; prompt: string | null; model: string;
   setup: string | null; punchline: string | null; chain_id: number | null; chain_name: string | null;
-  steps: number; total_ms: number | null; posted_id: number | null; picked_model: string | null;
+  steps: number; total_ms: number | null; posted_id: number | null; picked_model: string | null; chain_picked: boolean;
   first_name: string | null; last_name: string | null; user_id: string;
 };
 
 const RUN_COLUMNS = `
   g.id::int, g.created_at, g.category, g.prompt, g.model,
   g.candidates -> 0 ->> 'setup' as setup, g.candidates -> 0 ->> 'punchline' as punchline,
-  g.chain_id::int, c.name as chain_name, pm.name as picked_model,
+  g.chain_id::int, c.name as chain_name, pm.name as picked_model, g.chain_picked,
   (select count(*)::int from public.llm_responses lr where lr.generation_id = g.id) as steps,
   (select sum(lr.duration_ms)::int from public.llm_responses lr where lr.generation_id = g.id) as total_ms,
   (select j.id::int from public.jokes j where j.generation_id = g.id) as posted_id,
@@ -61,9 +61,9 @@ const RUN_FROM = `
 
 export async function getChainSteps(chainId: number) {
   await assertAdmin();
-  const [steps, runs, categories] = await Promise.all([
+  const [steps, runs, categories, mix] = await Promise.all([
     query<Step>(
-      `select s.id::int, s.position, s.name, s.temperature::text, s.system_prompt, s.user_prompt,
+      `select s.id::int, s.position, s.name, s.temperature::text, s.system_prompt, s.user_prompt, s.updated_at,
               m.id::int as model_id, m.name as model_name, m.provider_model_id, p.slug as provider, m.is_active,
               (select count(*)::int from public.llm_responses lr where lr.step_id = s.id) as calls,
               (select avg(lr.duration_ms)::int from public.llm_responses lr where lr.step_id = s.id) as avg_ms
@@ -73,8 +73,11 @@ export async function getChainSteps(chainId: number) {
         where s.chain_id = $1 order by s.position`, [chainId]),
     query<RunRow>(`select ${RUN_COLUMNS} ${RUN_FROM} where g.chain_id = $1 order by g.created_at desc limit 10`, [chainId]),
     query<{ category: string }>(`select category from public.jokes group by category order by count(*) desc limit 30`),
+    one<{ id: number; weight: number; total: number }>(
+      `select x.id::int, x.weight, (select sum(weight)::int from public.prompt_chain_mix) as total
+         from public.prompt_chain_mix x where x.chain_id = $1`, [chainId]),
   ]);
-  return { steps, runs, categories: categories.map((c) => c.category) };
+  return { steps, runs, categories: categories.map((c) => c.category), mix };
 }
 
 // ---------- generation requests ----------

@@ -1,6 +1,6 @@
 import { GenerateForm } from "@/components/generate-form";
 import { requireCompleteProfile } from "@/lib/auth";
-import { listPickableModels } from "@/lib/chain";
+import { listPickableChains, listPickableModels } from "@/lib/chain";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Generate a joke · humor-project" };
@@ -41,6 +41,9 @@ export default async function GeneratePage() {
     provider: m.provider === "openai" ? "OpenAI" : m.provider === "google" ? "Google" : m.provider,
   }));
 
+  // The style picker's options: the chains the mix can draw.
+  const styles = await listPickableChains();
+
   return (
     <main className="page page--narrow">
       <header className="page__head">
@@ -56,6 +59,7 @@ export default async function GeneratePage() {
           categories={categories}
           used={count ?? 0}
           models={models}
+          styles={styles}
         />
       </div>
     </main>

@@ -51,7 +51,7 @@ export default async function RequestsPage({ searchParams }: PageProps<"/admin/p
                     <Link href={`/admin/pipeline/requests/${g.id}`} className="ad-joke"><span className="ad-joke__setup">{g.setup}</span> <span className="ad-joke__punch">{g.punchline}</span></Link>
                     <div className="ad-person__sub">{g.category}{g.prompt ? <> · “{g.prompt}”</> : null}</div>
                   </td>
-                  <td>{g.chain_id ? <Link href={`/admin/pipeline/chains/${g.chain_id}`}>{g.chain_name}</Link> : <span className="ad-muted">before chains</span>}</td>
+                  <td>{g.chain_id ? <><Link href={`/admin/pipeline/chains/${g.chain_id}`}>{g.chain_name}</Link>{g.chain_picked ? <span className="ad-muted"> · picked</span> : null}</> : <span className="ad-muted">before chains</span>}</td>
                   <td className="ad-r">{g.steps || <span className="ad-muted">—</span>}</td>
                   <td className="ad-r ad-muted">{g.total_ms != null ? `${num(g.total_ms)} ms` : "—"}</td>
                   <td>{g.user_id ? <Link href={`/admin/users/${g.user_id}`}>{fullName(g.first_name, g.last_name)}</Link> : "—"}</td>

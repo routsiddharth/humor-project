@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Pager, pageParam, param } from "@/components/admin/bits";
+import { ExpandableRows, InlineCreate } from "@/components/admin/pipeline-inline";
 import { requireAdmin } from "@/lib/admin/dal";
-import { ago, num } from "@/lib/admin/format";
-import { listRows, PAGE_SIZE } from "@/lib/admin/pipeline/crud";
+import { ago, dateTime, num } from "@/lib/admin/format";
+import { getRowsByIds, listRows, PAGE_SIZE, resolveFields, toValues } from "@/lib/admin/pipeline/crud";
 import { getResource, type Column } from "@/lib/admin/pipeline/resources";
 
 export async function generateMetadata({ params }: PageProps<"/admin/pipeline/[resource]">) {
@@ -19,7 +20,11 @@ export default async function ResourceListPage({ params, searchParams }: PagePro
   const sp = await searchParams;
   const q = param(sp.q).trim().slice(0, 100);
   const page = pageParam(sp.page);
-  const { rows, total } = await listRows(r, { q, page });
+  const [{ rows, total }, fields] = await Promise.all([listRows(r, { q, page }), resolveFields(r)]);
+  // Chains open onto their own page, where their steps are edited; every
+  // other table edits a row right under it in the list.
+  const hub = r.slug === "chains";
+  const stored = await getRowsByIds(r, hub ? [] : rows.map((row) => row.id));
 
   return (
     <>
@@ -28,8 +33,12 @@ export default async function ResourceListPage({ params, searchParams }: PagePro
           <h1>{r.title}</h1>
           <p>{r.blurb}</p>
         </div>
-        {r.ops.create ? <Link href={`/admin/pipeline/${r.slug}/new`} className="ad-btn ad-btn--primary">New {r.singular}</Link> : null}
       </div>
+
+      {r.ops.create ? (
+        <InlineCreate slug={r.slug} singular={r.singular} fields={fields} values={toValues(r, null)}
+          openPrefix={hub ? "/admin/pipeline/chains/" : undefined} />
+      ) : null}
 
       {sp.deleted ? <div className="ad-notice">Deleted.</div> : null}
 
@@ -42,14 +51,29 @@ export default async function ResourceListPage({ params, searchParams }: PagePro
         <div className="ad-table-wrap">
           <table>
             <thead>
-              <tr>{r.columns.map((c) => <th key={c.key} className={c.kind === "num" ? "ad-r" : undefined}>{c.label}</th>)}</tr>
+              <tr>
+                {hub ? null : <th aria-label="Edit" style={{ width: 28 }} />}
+                {r.columns.map((c) => <th key={c.key} className={c.kind === "num" ? "ad-r" : undefined}>{c.label}</th>)}
+              </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
+              {hub ? rows.map((row) => (
                 <tr key={row.id}>
                   {r.columns.map((c) => <Cell key={c.key} c={c} value={row[c.key]} href={`/admin/pipeline/${r.slug}/${row.id}`} />)}
                 </tr>
-              ))}
+              )) : (
+                <ExpandableRows slug={r.slug} singular={r.singular} fields={fields} span={r.columns.length} canDelete={r.ops.delete}
+                  rows={rows.map((row) => {
+                    const full = stored.get(row.id);
+                    return {
+                      id: row.id,
+                      cells: r.columns.map((c) => <Cell key={c.key} c={c} value={row[c.key]} />),
+                      values: toValues(r, full ?? null),
+                      meta: full ? `Created ${dateTime(full.created_at)}${full.created_by_email ? ` by ${full.created_by_email}` : ""}`
+                        + ` · changed ${dateTime(full.updated_at)}${full.updated_by_email ? ` by ${full.updated_by_email}` : ""}` : "",
+                    };
+                  })} />
+              )}
             </tbody>
           </table>
           {rows.length === 0 ? <p className="ad-empty">{q ? `Nothing matches “${q}”.` : `No ${r.title.toLowerCase()} yet.`}</p> : null}
@@ -60,10 +84,12 @@ export default async function ResourceListPage({ params, searchParams }: PagePro
   );
 }
 
-function Cell({ c, value, href }: { c: Column; value: unknown; href: string }) {
+function Cell({ c, value, href }: { c: Column; value: unknown; href?: string }) {
   switch (c.kind) {
     case "link":
-      return <td className="ad-clip"><Link href={href} className="ad-row-link">{String(value ?? "—")}</Link></td>;
+      return href
+        ? <td className="ad-clip"><Link href={href} className="ad-row-link">{String(value ?? "—")}</Link></td>
+        : <td className="ad-clip"><span className="ad-row-link">{String(value ?? "—")}</span></td>;
     case "mono":
       return <td className="ad-mono ad-muted">{String(value ?? "—")}</td>;
     case "bool":

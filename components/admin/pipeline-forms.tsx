@@ -3,7 +3,8 @@
 import { useActionState, useState } from "react";
 
 import {
-  createRow, deleteRowAction, testRunChain, updateRowAction, type RowState, type TestRunState,
+  createRow, createRowInline, deleteRowAction, deleteRowInline, testRunChain, updateRowAction,
+  type RowState, type TestRunState,
 } from "@/app/admin/pipeline/actions";
 import { Trace } from "@/components/admin/pipeline-bits";
 import { num } from "@/lib/admin/format";
@@ -51,7 +52,7 @@ function Input({ f, value, set }: { f: ResolvedField; value: string | boolean; s
   }
 }
 
-function Fields({ fields, values, set }: { fields: ResolvedField[]; values: RowValues; set: Set }) {
+export function Fields({ fields, values, set }: { fields: ResolvedField[]; values: RowValues; set: Set }) {
   // Pair consecutive half-width fields into one row.
   const groups: ResolvedField[][] = [];
   for (const f of fields) {
@@ -72,11 +73,23 @@ function Fields({ fields, values, set }: { fields: ResolvedField[]; values: RowV
   return groups.map((g) => (g.length === 2 ? <div key={g[0].name} className="ad-form-row">{g.map(one)}</div> : one(g[0])));
 }
 
-export function RowForm({ slug, id, fields, values, singular }:
-  { slug: string; id?: number; fields: ResolvedField[]; values: RowValues; singular: string }) {
+// `onCreated` makes a create form inline: it stays on the page it sits on and
+// hears the new id, instead of redirecting to the new row's own page.
+export function RowForm({ slug, id, fields, values, singular, onCreated, onCancel, children }: {
+  slug: string; id?: number; fields: ResolvedField[]; values: RowValues; singular: string;
+  onCreated?: (id: number) => void; onCancel?: () => void; children?: React.ReactNode;
+}) {
   const [current, setCurrent] = useState<RowValues>(values);
   const set: Set = (name, v) => setCurrent((prev) => ({ ...prev, [name]: v }));
-  const action = id == null ? createRow.bind(null, slug) : updateRowAction.bind(null, slug, id);
+  const action = id != null
+    ? updateRowAction.bind(null, slug, id)
+    : onCreated
+      ? async (prev: RowState, fd: FormData) => {
+        const result = await createRowInline(slug, prev, fd);
+        if (result.id) { setCurrent(values); onCreated(result.id); }
+        return result;
+      }
+      : createRow.bind(null, slug);
   const [state, submit, pending] = useActionState<RowState, FormData>(action, {});
   return (
     <form className="ad-form" action={submit}>
@@ -85,20 +98,26 @@ export function RowForm({ slug, id, fields, values, singular }:
         <button className="ad-btn ad-btn--primary" disabled={pending}>
           {pending ? "Saving…" : id == null ? `Create ${singular}` : "Save changes"}
         </button>
-        {state.ok ? <span className="ad-form-ok">{state.ok}</span> : null}
+        {onCancel ? <button type="button" className="ad-btn" onClick={onCancel}>Cancel</button> : null}
+        {state.ok && id != null ? <span className="ad-form-ok">{state.ok}</span> : null}
+        {children ? <span className="ad-spacer" /> : null}
+        {children}
       </div>
       {state.error ? <p className="ad-form-error" role="alert">{state.error}</p> : null}
     </form>
   );
 }
 
-export function DeleteRowButton({ slug, id, singular }: { slug: string; id: number; singular: string }) {
+// `inline` deletes in place: the page re-renders without the row instead of
+// going back to the list.
+export function DeleteRowButton({ slug, id, singular, inline, small }:
+  { slug: string; id: number; singular: string; inline?: boolean; small?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   return (
     <form
       action={async () => {
-        const result = await deleteRowAction(slug, id);
+        const result = await (inline ? deleteRowInline : deleteRowAction)(slug, id);
         setPending(false);
         if (result?.error) setError(result.error);
       }}
@@ -107,7 +126,7 @@ export function DeleteRowButton({ slug, id, singular }: { slug: string; id: numb
         else { setError(null); setPending(true); }
       }}
     >
-      <button className="ad-btn ad-btn--danger" disabled={pending}>{pending ? "Deleting…" : "Delete"}</button>
+      <button className={`ad-btn ad-btn--danger${small ? " ad-btn--sm" : ""}`} disabled={pending}>{pending ? "Deleting…" : "Delete"}</button>
       {error ? <p className="ad-form-error" role="alert" style={{ maxWidth: 360 }}>{error}</p> : null}
     </form>
   );

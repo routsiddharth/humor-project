@@ -49,7 +49,7 @@ const SMALLINT = { min: -32768, max: 32767 };
 
 const updated: Column = { key: "updated", label: "Updated", sql: "updated_at", kind: "ago" };
 
-const PLACEHOLDER_HINT = `Placeholders: ${Object.keys(PLACEHOLDERS).map((p) => `{{${p}}}`).join(", ")}, and {{step1}}, {{step2}}… for the answer of an earlier step.`;
+export const PLACEHOLDER_HINT = `Placeholders: ${Object.keys(PLACEHOLDERS).map((p) => `{{${p}}}`).join(", ")}, and {{step1}}, {{step2}}… for the answer of an earlier step.`;
 
 export const RESOURCES: Record<string, Resource> = {
   chains: {

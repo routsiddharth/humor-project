@@ -85,7 +85,21 @@ export async function listPickableModels(): Promise<ModelRef[]> {
   return rows.map(toModel).filter((m) => isConfigured(m.provider));
 }
 
-// The chain to run: the one asked for (an admin test run), otherwise a weighted
+// The chains a user can pick as a style on Generate: exactly the ones the mix
+// can draw — switched on and with at least one step — so an admin turning a
+// chain off in the mix also takes it out of the picker.
+export async function listPickableChains() {
+  const { rows } = await query<{ id: number; name: string; description: string | null }>(
+    `select c.id::int, c.name, c.description
+       from public.prompt_chains c
+       join public.prompt_chain_mix x on x.chain_id = c.id
+      where x.weight > 0
+        and exists (select 1 from public.prompt_chain_steps s where s.chain_id = c.id)
+      order by c.name`);
+  return rows;
+}
+
+// The chain to run: the one asked for (a style pick or an admin test run), otherwise a weighted
 // draw from the mix. Only chains with at least one step can be drawn.
 async function pickChain(chainId?: number): Promise<{ id: number; name: string }> {
   if (chainId != null) {

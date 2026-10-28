@@ -52,6 +52,7 @@ export default async function RequestPage({ params }: PageProps<"/admin/pipeline
               <dt>Category</dt><dd>{g.category}</dd>
               <dt>Topic</dt><dd>{g.prompt ? `“${g.prompt}”` : <span className="ad-muted">none</span>}</dd>
               <dt>Picked</dt><dd>{g.picked_model ?? <span className="ad-muted">Auto</span>}</dd>
+              <dt>Style</dt><dd>{g.chain_picked ? "chosen by the user" : <span className="ad-muted">drawn from the mix</span>}</dd>
               <dt>Final model</dt><dd className="ad-mono">{g.model}</dd>
               <dt>Total time</dt><dd>{g.total_ms != null ? `${num(g.total_ms)} ms` : "—"}</dd>
               <dt>Status</dt><dd>{g.posted_id ? <Link href={`/admin/media/${g.posted_id}`}>Posted as #{g.posted_id}</Link> : "Discarded"}</dd>

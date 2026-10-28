@@ -7,15 +7,16 @@ import { assertAdmin } from "@/lib/admin/dal";
 import { deleteRow, explain, insertRow, parseFields, updateRow } from "@/lib/admin/pipeline/crud";
 import { getResource } from "@/lib/admin/pipeline/resources";
 import { ChainError, runChain, type TraceStep } from "@/lib/chain";
+import { checkTemplate } from "@/lib/chain-template";
 import { MAX_TOPIC_CHARS } from "@/lib/generate";
-import { query } from "@/lib/admin/db";
+import { pool, query } from "@/lib/admin/db";
 
 // Every action opens with assertAdmin(): a Server Action is a public POST
 // endpoint. The resource slug arrives from the client, so it is looked up in
 // the config and refused if unknown, and the config's ops decide what is
 // allowed — a forged call cannot create or delete where the UI does not.
 
-export type RowState = { error?: string; ok?: string };
+export type RowState = { error?: string; ok?: string; id?: number };
 
 async function setup(slug: string) {
   const admin = await assertAdmin();
@@ -70,6 +71,94 @@ export async function deleteRowAction(slug: string, id: number): Promise<RowStat
   }
   revalidatePath("/admin/pipeline", "layout");
   redirect(`/admin/pipeline/${r.slug}?deleted=1`);
+}
+
+// ---------- inline editing ----------
+//
+// The same writes for forms that live on a list or chain page rather than a
+// page of their own: they return instead of redirecting, and the revalidate
+// re-renders the page they sit on with the new row in (or out of) it.
+
+export async function createRowInline(slug: string, _prev: RowState, formData: FormData): Promise<RowState> {
+  const { r, actorId } = await setup(slug);
+  if (!r.ops.create) throw new Error("Not allowed.");
+  const values = read(r, formData);
+  if (typeof values === "string") return { error: values };
+  try {
+    const row = await insertRow(r, values, actorId);
+    revalidatePath("/admin/pipeline", "layout");
+    return { ok: "Created.", id: row!.id };
+  } catch (error) {
+    return { error: explain(error, r, "write") };
+  }
+}
+
+export async function deleteRowInline(slug: string, id: number): Promise<RowState> {
+  const { r } = await setup(slug);
+  if (!r.ops.delete) throw new Error("Not allowed.");
+  try {
+    await deleteRow(r, id);
+  } catch (error) {
+    return { error: explain(error, r, "delete") };
+  }
+  revalidatePath("/admin/pipeline", "layout");
+  return { ok: "Deleted." };
+}
+
+const STEP_REF = /\{\{\s*step([1-9][0-9]?)\s*\}\}/g;
+
+// Swaps a step with the one above or below it. {{stepN}} names a position, so
+// every prompt in the chain is rewritten to follow the two steps that moved:
+// "use the angles" keeps meaning the angles step wherever it now sits. A move
+// that would leave a step reading one that now runs after it is refused.
+export async function moveStep(stepId: number, dir: number): Promise<RowState> {
+  const admin = await assertAdmin();
+  if (dir !== -1 && dir !== 1) throw new Error("Bad direction.");
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const { rows: steps } = await client.query<{ id: number; name: string; position: number; system_prompt: string; user_prompt: string }>(
+      `select id::int, name, position, system_prompt, user_prompt from public.prompt_chain_steps
+        where chain_id = (select chain_id from public.prompt_chain_steps where id = $1)
+        order by position for update`, [stepId]);
+    const i = steps.findIndex((s) => s.id === stepId);
+    const a = steps[i], b = steps[i + dir];
+    if (!a || !b) { await client.query("rollback"); return {}; }
+
+    const swap = (t: string) => t.replace(STEP_REF, (whole, n: string) =>
+      Number(n) === a.position ? `{{step${b.position}}}` : Number(n) === b.position ? `{{step${a.position}}}` : whole);
+    const next = steps.map((s) => ({
+      ...s,
+      position: s.id === a.id ? b.position : s.id === b.id ? a.position : s.position,
+      system_prompt: swap(s.system_prompt),
+      user_prompt: swap(s.user_prompt),
+    }));
+    for (const s of next) {
+      const problem = checkTemplate(s.system_prompt, s.position) ?? checkTemplate(s.user_prompt, s.position);
+      if (problem) {
+        await client.query("rollback");
+        return { error: `Can't move it there: in “${s.name}”, ${problem}` };
+      }
+    }
+    const changed = next.filter((s, k) => s.position !== steps[k].position
+      || s.system_prompt !== steps[k].system_prompt || s.user_prompt !== steps[k].user_prompt);
+    // One statement, so the deferrable unique (0015) sees the finished swap.
+    await client.query(
+      `update public.prompt_chain_steps s
+          set position = v.position, system_prompt = v.sp, user_prompt = v.up, updated_by = $5, updated_at = now()
+         from unnest($1::bigint[], $2::smallint[], $3::text[], $4::text[]) as v(id, position, sp, up)
+        where s.id = v.id`,
+      [changed.map((s) => s.id), changed.map((s) => s.position), changed.map((s) => s.system_prompt),
+        changed.map((s) => s.user_prompt), admin.id]);
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback").catch(() => {});
+    throw error;
+  } finally {
+    client.release();
+  }
+  revalidatePath("/admin/pipeline", "layout");
+  return {};
 }
 
 // ---------- test run ----------

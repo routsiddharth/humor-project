@@ -50,6 +50,22 @@ export async function getRow(r: Resource, id: number) {
   );
 }
 
+// Full stored rows for a page of a list, so each can open into its form.
+export async function getRowsByIds(r: Resource, ids: number[]) {
+  await assertAdmin();
+  if (!ids.length) return new Map<number, StoredRow>();
+  const rows = await query<StoredRow>(
+    `select r.*, r.id::int as id, null as heading,
+            cu.email as created_by_email, uu.email as updated_by_email
+       from public.${r.table} r
+       left join auth.users cu on cu.id = r.created_by
+       left join auth.users uu on uu.id = r.updated_by
+      where r.id = any($1::bigint[])`,
+    [ids],
+  );
+  return new Map(rows.map((row) => [row.id, row]));
+}
+
 export async function resolveFields(r: Resource): Promise<ResolvedField[]> {
   await assertAdmin();
   return Promise.all(
